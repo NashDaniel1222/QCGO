@@ -1,0 +1,23 @@
+@model QCGO.Models.SpotInputViewModel
+
+@{
+    ViewBag.Title = "Add New Spot";
+}
+
+<h2>Add a New Tourist Spot</h2>
+
+<form asp-action="AddSpot" method="post">
+    <div><label>Name</label><input asp-for="Name" /></div>
+    <div><label>District</label><input asp-for="District" /></div>
+    <div><label>Barangay</label><input asp-for="Barangay" /></div>
+    <div><label>Type</label><input asp-for="Type" /></div>
+    <div><label>Description</label><textarea asp-for="Description"></textarea></div>
+    <div><label>Latitude</label><input asp-for="Latitude" /></div>
+    <div><label>Longitude</label><input asp-for="Longitude" /></div>
+    <div><label>Tags (comma-separated)</label><input asp-for="Tags" /></div>
+    <div><label>Map URL</label><input asp-for="MapUrl" /></div>
+    <div><label>Public Transport</label><input asp-for="PublicTransport" type="checkbox" /></div>
+    <div><label>Parking Available</label><input asp-for="ParkingAvailable" type="checkbox" /></div>
+    <div><label>Wheelchair Accessible</label><input asp-for="WheelchairAccessible" type="checkbox" /></div>
+    <button type="submit">Submit</button>
+</form>

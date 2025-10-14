@@ -1,0 +1,30 @@
+@model QCGO.Models.Spot
+
+@{
+    ViewData["Title"] = Model?.Name ?? "Spot Details";
+}
+
+<div class="spot-details">
+    <a href='@Url.Action("Index", "Home")'>&larr; Back</a>
+    <h1>@Model?.Name</h1>
+
+    <div class="spot-details-main">
+        <div class="spot-details-image">
+            @if (!string.IsNullOrEmpty(Model?.ImageUrl))
+            {
+                var encoded = System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Model.ImageUrl));
+                <img src='@Url.Action("Fetch", "Image", new { b64 = encoded })' alt='@Model.Name' />
+            }
+        </div>
+        <div class="spot-details-info">
+            <p><strong>District:</strong> @Model?.District</p>
+            <p><strong>Barangay:</strong> @Model?.Barangay</p>
+            <p><strong>Description:</strong></p>
+            <p>@Model?.Description</p>
+            @if (Model?.Tags != null && Model.Tags.Any())
+            {
+                <p><strong>Tags:</strong> @string.Join(", ", Model.Tags)</p>
+            }
+        </div>
+    </div>
+</div>

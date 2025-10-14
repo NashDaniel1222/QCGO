@@ -1,0 +1,53 @@
+﻿@model IEnumerable<QCGO.Models.Spot>
+
+@{
+    ViewData["Title"] = "QCGO";
+}
+
+<h1>Spots</h1>
+
+@{
+    var q = ViewData["SearchQuery"] as string;
+    var activeTag = ViewData["tag"] as string;
+    var activeDistrict = ViewData["district"] as string;
+    if (!string.IsNullOrEmpty(q) || !string.IsNullOrEmpty(activeTag) || !string.IsNullOrEmpty(activeDistrict))
+    {
+        <p>
+            Showing @Model?.Count() result(s)
+            @if (!string.IsNullOrEmpty(q)) { <text> for "@q"</text> }
+            @if (!string.IsNullOrEmpty(activeTag)) { <text> | Tag: @activeTag</text> }
+            @if (!string.IsNullOrEmpty(activeDistrict)) { <text> | District: @activeDistrict</text> }
+        </p>
+    }
+}
+
+
+
+@if (Model != null && Model.Any())
+{
+    <div class="spots-grid">
+        @foreach (var spot in Model)
+        {
+            var tagList = spot.Tags != null ? string.Join(",", spot.Tags) : "";
+            <a class="spot-card-link" href="@Url.Action("Details", "Home", new { id = spot.Id })">
+                <div class="spot-card" data-tags="@tagList" data-district="@spot.District">
+                    <div class="spot-thumb" aria-hidden="true">
+                        @if (!string.IsNullOrEmpty(spot.ImageUrl))
+                        {
+                            var encoded = System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(spot.ImageUrl));
+                            <img src="@Url.Action("Fetch", "Image", new { b64 = encoded })" alt="@spot.Name" />
+                        }
+                    </div>
+                    <div class="spot-info">
+                        <div class="spot-name">@spot.Name</div>
+                        <div class="spot-district">District: @spot.District</div>
+                    </div>
+                </div>
+            </a>
+        }
+    </div>
+}
+else
+{
+    <p>No spots to display.</p>
+}

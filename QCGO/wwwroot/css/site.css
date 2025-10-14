@@ -1,0 +1,264 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+:root{
+    --sidebar-width: 320px;
+    --sidebar-collapsed-width: 72px;
+    --sidebar-bg: #1f2937;
+    --btn-bg: transparent;
+    --btn-hover: #374151;
+    --icon-color: #e5e7eb;
+    --accent: #ef4444;
+}
+html,body{height:100%;margin:0;font-family:Segoe UI, Roboto, "Helvetica Neue", Arial}
+.app-shell{display:flex;min-height:100vh}
+
+/* Floating header styles */
+.floating-header {
+    position:relative;
+    top:0;
+    left:0;
+    right:0;
+    margin: 28px 32px 32px 32px;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 4px 24px 0 rgba(30,41,59,0.10), 0 1.5px 4px 0 rgba(30,41,59,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 64px;
+    z-index: 10;
+    padding: 0 32px;
+    gap: 16px;
+}
+.header-left {
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #2563eb;
+    letter-spacing: 1px;
+}
+.header-center {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #222;
+}
+.header-nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 18px;
+    border-radius: 8px;
+    background: none;
+    border: none;
+    color: #222;
+    font-size: 1.08em;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background .13s, color .13s;
+    cursor: pointer;
+    position: relative;
+}
+.header-nav-btn.active, .header-nav-btn:focus {
+    background: #e0e7ff;
+    color: #2563eb;
+}
+.header-nav-btn:hover:not(.active) {
+    background: #f3f4f6;
+    color: #2563eb;
+}
+.header-home {
+    margin-right: 2px;
+}
+.header-spot-icon {
+    display: flex;
+    align-items: center;
+    margin-left: 0;
+}
+.header-add-spot-text {
+    margin-left: 2px;
+}
+.header-right {
+    display: flex;
+    align-items: center;
+}
+.header-search {
+    display: flex;
+    align-items: center;
+    background: #f3f4f6;
+    border-radius: 8px;
+    padding: 2px 8px 2px 12px;
+    box-shadow: none;
+    border: 1px solid #e5e7eb;
+}
+.header-search input[type="text"] {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 1em;
+    padding: 6px 0;
+    min-width: 120px;
+    color: #222;
+}
+.header-search button {
+    background: none;
+    border: none;
+    padding: 0 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+.header-search button svg {
+    display: block;
+}
+
+.main-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.sidebar{
+    width:var(--sidebar-collapsed-width);
+    background:var(--sidebar-bg);
+    color:var(--icon-color);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:12px 8px;
+    box-sizing:border-box;
+    transition: width 0.2s;
+    position:relative;
+    border-right:1px solid #e5e7eb22;
+}
+.sidebar .sidebar-content {
+    display:none;
+    opacity:0;
+    pointer-events:none;
+    width:0;
+    transition:opacity 0.2s;
+}
+.sidebar:not(.collapsed) {
+    width:var(--sidebar-width);
+    align-items:stretch;
+}
+.sidebar:not(.collapsed) .sidebar-content {
+    display:block;
+    opacity:1;
+    pointer-events:auto;
+    width:auto;
+    margin-top:12px;
+}
+.sidebar.collapsed{
+    width:var(--sidebar-collapsed-width);
+    padding-left:0;padding-right:0;
+}
+.sidebar .logo{width:40px;height:40px;margin-bottom:12px;border-radius:6px;background:#111827;display:flex;align-items:center;justify-content:center;font-weight:600;color:#fff;transition:opacity 0.2s}
+.sidebar.collapsed .logo{opacity:0;pointer-events:none;height:0;margin-bottom:0}
+.nav-buttons{display:flex;flex-direction:column;gap:8px;width:100%;align-items:center}
+.nav-button{
+    width:48px;height:48px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;border:none;background:var(--btn-bg);cursor:pointer;color:var(--icon-color);transition:background .15s, transform .06s
+}
+.nav-button:hover{background:var(--btn-hover);transform:translateY(-1px)}
+.nav-button:active{transform:translateY(0)}
+.nav-button .label{display:none}
+.sidebar-toggle{
+    margin-bottom:16px;width:32px;height:32px;border-radius:6px;background:var(--btn-bg);border:none;color:var(--icon-color);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s
+}
+.sidebar-toggle:hover{background:var(--btn-hover)}
+
+/* Sidebar expanded content styles */
+.sidebar-content {
+    padding:0 12px 12px 12px;
+    overflow-y:auto;
+    max-height:calc(100vh - 60px);
+    min-width:200px;
+}
+.sidebar-section {
+    margin-bottom:24px;
+}
+.sidebar-title {
+    font-weight:600;
+    margin-bottom:8px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:1.08em;
+}
+.sidebar-tags {
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+}
+.sidebar-tags button {
+    background:#f3f4f6;
+    color:#222;
+    border:none;
+    border-radius:8px;
+    padding:6px 14px;
+    font-size:1em;
+    margin-bottom:6px;
+    cursor:pointer;
+    transition:background .15s;
+    display:flex;
+    align-items:center;
+    gap:4px;
+}
+.sidebar-tags button:hover {
+    background:#e5e7eb;
+}
+.sidebar-hide-btn {
+    background:transparent;
+    color:#222;
+    border:none;
+    font-size:1em;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    cursor:pointer;
+    margin-bottom:12px;
+    font-weight:500;
+    padding:4px 0;
+}
+.sidebar-hide-btn svg {
+    color:#222;
+}
+main.content{flex:1;padding:24px;background:#f9fafb}
+@media (max-width:640px){
+    .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:50}
+    main.content{margin-left:var(--sidebar-width)}
+}
+
+/* Spots grid and card */
+.spots-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;margin-top:18px}
+.spot-card{background:#fff;border-radius:12px;padding:12px;box-shadow:0 6px 18px rgba(16,24,40,0.06);display:flex;flex-direction:column;align-items:center}
+.spot-card-link{display:block;text-decoration:none;color:inherit}
+.spot-card-link:hover .spot-card{transform:translateY(-4px);transition:transform .12s}
+.spot-thumb{width:96px;height:72px;border-radius:8px;background:linear-gradient(135deg,#e6eefc,#f3f4f6);border:1px solid #e5e7eb;box-sizing:border-box;margin-bottom:8px}
+.spot-thumb img{width:100%;height:100%;object-fit:cover;border-radius:6px;display:block}
+.spot-info{width:100%;text-align:center}
+.spot-name{font-weight:600;color:#111;margin-bottom:4px}
+.spot-district{font-size:0.9rem;color:#6b7280}
