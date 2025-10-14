@@ -774,7 +774,7 @@
   },
   "projectFileDependencyGroups": {
     "net8.0": [
-      "MongoDB.Driver >= 2.26.1"
+      "MongoDB.Driver >= 2.27.0"
     ]
   },
   "packageFolders": {
@@ -829,7 +829,7 @@
         "dependencies": {
           "MongoDB.Driver": {
             "target": "Package",
-            "version": "[2.26.1, )"
+            "version": "[2.27.0, )"
           }
         },
         "imports": [
@@ -854,17 +854,5 @@
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
       }
     }
-  },
-  "logs": [
-    {
-      "code": "NU1603",
-      "level": "Warning",
-      "warningLevel": 1,
-      "message": "QCGO depends on MongoDB.Driver (>= 2.26.1) but MongoDB.Driver 2.26.1 was not found. MongoDB.Driver 2.27.0 was resolved instead.",
-      "libraryId": "MongoDB.Driver",
-      "targetGraphs": [
-        "net8.0"
-      ]
-    }
-  ]
+  }
 }

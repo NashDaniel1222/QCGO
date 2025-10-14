@@ -52,7 +52,7 @@
           "dependencies": {
             "MongoDB.Driver": {
               "target": "Package",
-              "version": "[2.26.1, )"
+              "version": "[2.27.0, )"
             }
           },
           "imports": [

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "uLAAvs1g0s4=",
+  "dgSpecHash": "bAU05XHrxq0=",
   "success": true,
   "projectFilePath": "C:\\Users\\markm\\Documents\\QCGO-1\\QCGO\\QCGO.csproj",
   "expectedPackageFiles": [
@@ -23,18 +23,5 @@
     "C:\\Users\\markm\\.nuget\\packages\\system.security.principal.windows\\5.0.0\\system.security.principal.windows.5.0.0.nupkg.sha512",
     "C:\\Users\\markm\\.nuget\\packages\\zstdsharp.port\\0.7.3\\zstdsharp.port.0.7.3.nupkg.sha512"
   ],
-  "logs": [
-    {
-      "code": "NU1603",
-      "level": "Warning",
-      "message": "QCGO depends on MongoDB.Driver (>= 2.26.1) but MongoDB.Driver 2.26.1 was not found. MongoDB.Driver 2.27.0 was resolved instead.",
-      "projectPath": "C:\\Users\\markm\\Documents\\QCGO-1\\QCGO\\QCGO.csproj",
-      "warningLevel": 1,
-      "filePath": "C:\\Users\\markm\\Documents\\QCGO-1\\QCGO\\QCGO.csproj",
-      "libraryId": "MongoDB.Driver",
-      "targetGraphs": [
-        "net8.0"
-      ]
-    }
-  ]
+  "logs": []
 }
