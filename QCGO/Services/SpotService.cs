@@ -48,21 +48,9 @@ namespace QCGO.Services
         // ✅ Add new spot to MongoDB
         public void AddSpot(Spot spot)
         {
-            if (!_connected || _spots == null)
-            {
-                _logger.LogWarning("SpotService is not connected to MongoDB. Cannot add spot.");
-                return;
-            }
-
-            try
-            {
-                _spots.InsertOne(spot);
-                _logger.LogInformation("Successfully added new spot: {name}", spot.Name);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error while adding new spot to MongoDB.");
-            }
+            // AddSpot functionality removed/disabled. Keep method as no-op to avoid breaking calls.
+            _logger.LogInformation("AddSpot called but is disabled in this build.");
+            return;
         }
 
         public List<Spot> GetAll()

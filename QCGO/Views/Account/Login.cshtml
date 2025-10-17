@@ -1,0 +1,293 @@
+@model QCGO.Models.LoginViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Login";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: Segoe UI, Roboto, "Helvetica Neue", Arial;
+            background: #f3f4f6;
+        }
+
+        .auth-page {
+            display: flex;
+            height: 100vh;
+        }
+
+        .auth-left {
+            width: 33.3333%;
+            min-width: 300px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-right: 1px solid #eef2ff;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 360px;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        .auth-title {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: #111827;
+        }
+
+        .auth-sub {
+            margin-bottom: 24px;
+            color: #6b7280;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            font-size: 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+        }
+
+        .form-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn.primary {
+            background-color: #2563eb;
+            color: #fff;
+        }
+
+        .btn.secondary {
+            background-color: #e5e7eb;
+            color: #111827;
+        }
+
+        .auth-footer {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        .auth-footer a {
+            margin-left: 6px;
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .auth-right {
+            width: 66.6666%;
+            background: linear-gradient(180deg, #fbfdff, #f7fafc);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 48px;
+        }
+
+        .auth-hero {
+            max-width: 740px;
+            text-align: center;
+            color: #111;
+        }
+
+        @@media (max-width: 900px) {
+            .auth-page {
+                flex-direction: column;
+            }
+
+            .auth-left {
+                width: 100%;
+                height: auto;
+                padding: 28px;
+            }
+
+            .auth-right {
+                display: none;
+            }
+
+            .auth-card {
+                max-width: 100%;
+                border-radius: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-page">
+        <div class="auth-left">
+            <div class="auth-card">
+                <!-- Card-scoped Register modal (single instance) -->
+                <div class="card-modal-backdrop" style="display:none"></div>
+                <div class="card-register-modal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none">
+                    <div class="register-card">
+                        <h3 style="margin-top:0">Create an account</h3>
+                        <p style="color:#6b7280;margin-bottom:12px">Quick sign up — local client-side demo only.</p>
+                        <form id="registerForm" asp-controller="Account" asp-action="Register" method="post">
+                            @Html.AntiForgeryToken()
+                            <div class="form-group">
+                                <label for="regEmail">Email</label>
+                                <input id="regEmail" name="Email" type="email" class="form-control" />
+                            </div>
+                            <div class="form-group">
+                                <label for="regPassword">Password</label>
+                                <input id="regPassword" name="Password" type="password" class="form-control" />
+                            </div>
+                            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+                                <button type="button" id="cancelRegister" class="btn secondary">Cancel</button>
+                                <button type="submit" class="btn primary">Register</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <h1 class="auth-title">Welcome back</h1>
+                <p class="auth-sub">Sign in to continue to QCGO</p>
+
+                @if (TempData["AuthMessage"] != null)
+                {
+                    <div class="auth-notice">@TempData["AuthMessage"]</div>
+                }
+
+                <div class="login-block">
+                    <form asp-action="Login" method="post">
+                        <div class="form-group">
+                            <label asp-for="Email"></label>
+                            <input asp-for="Email" class="form-control" />
+                            <span asp-validation-for="Email" class="validation-message"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Password"></label>
+                            <input asp-for="Password" class="form-control" />
+                            <span asp-validation-for="Password" class="validation-message"></span>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="checkbox-inline">
+                                <input asp-for="RememberMe" />
+                                @Html.DisplayNameFor(m => m.RememberMe)
+                            </label>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn primary">Log in</button>
+                            <a class="btn secondary" href="@Url.Action("Index", "Home")">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="auth-footer">
+                    <span>Don't have an account?</span>
+                    <button type="button" id="openRegister" class="btn secondary">Register</button>
+                </div>
+
+                
+            </div>
+        </div>
+        <div class="auth-right">
+            <div class="auth-hero">
+                <h2 style="font-size:1.6rem;margin-bottom:10px;color:#2563eb">QCGO</h2>
+                <p style="color:#374151;line-height:1.4">Explore and add community spots. Sign in to manage your contributions and see personalized data.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
+    <!-- (global modal removed — modal is scoped inside .auth-card) -->
+
+    <script>
+        $(function(){
+            var $card = $('.auth-card');
+            var $backdrop = $card.find('.card-modal-backdrop');
+            var $modal = $card.find('.card-register-modal');
+
+            // storage for detached nodes
+            var $detachedLogin = null;
+
+            function openModal(){
+                // detach login-related nodes so they are removed from the DOM while registering
+                $detachedLogin = $();
+                var $title = $card.find('.auth-title');
+                var $sub = $card.find('.auth-sub');
+                var $loginBlock = $card.find('.login-block');
+                var $footer = $card.find('.auth-footer');
+                $detachedLogin = $detachedLogin.add($title).add($sub).add($loginBlock).add($footer);
+                $detachedLogin.detach();
+
+                $card.addClass('modal-open');
+                $backdrop.fadeIn(120);
+                $modal.attr('aria-hidden','false').fadeIn(160);
+                $card.find('#regEmail').focus();
+            }
+
+            function closeModal(){
+                $modal.attr('aria-hidden','true').fadeOut(120);
+                $backdrop.fadeOut(120, function(){
+                    $card.removeClass('modal-open');
+                    // reattach previously detached nodes at the top of the card after modal
+                    if ($detachedLogin && $detachedLogin.length) {
+                        $card.append($detachedLogin);
+                        $detachedLogin = null;
+                    }
+                });
+                $card.find('#openRegister').focus();
+            }
+
+            $card.find('#openRegister').on('click', function(e){
+                e.preventDefault();
+                openModal();
+            });
+
+            $card.find('#cancelRegister').on('click', function(){ closeModal(); });
+            $backdrop.on('click', function(){ closeModal(); });
+
+            $card.find('#registerForm').on('submit', function(e){
+                // client-side validation
+                var email = $card.find('#regEmail').val() || '';
+                var pass = $card.find('#regPassword').val() || '';
+                var errors = [];
+                if (!email.trim()) errors.push('Email is required');
+                if (!pass) errors.push('Password is required');
+                if (errors.length) {
+                    alert(errors.join('\n'));
+                    e.preventDefault();
+                    return;
+                }
+                // allow form to submit to the server (Account/Register) which will redirect back to Login
+            });
+        });
+    </script>
+</body>
+</html>

@@ -6,6 +6,16 @@ builder.Services.AddControllersWithViews();
 // HttpClient for image proxying
 builder.Services.AddHttpClient();
 
+// Authentication (cookie)
+builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.LogoutPath = "/Account/Logout";
+        options.Cookie.Name = "QCGO.Auth";
+        options.ExpireTimeSpan = TimeSpan.FromDays(14);
+    });
+
 // Bind MongoDB settings from configuration and register SpotService
 builder.Services.Configure<QCGO.Models.MongoSettings>(builder.Configuration.GetSection("Mongo"));
 // Resolve MongoSettings and register SpotService
@@ -15,6 +25,7 @@ builder.Services.AddSingleton(sp => {
     return settings;
 });
 builder.Services.AddSingleton<QCGO.Services.SpotService>();
+builder.Services.AddSingleton<QCGO.Services.AccountService>();
 
 var app = builder.Build();
 
@@ -27,6 +38,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

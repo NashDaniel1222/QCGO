@@ -46,44 +46,14 @@ namespace QCGO.Controllers
         [HttpGet]
         public IActionResult AddSpot()
         {
-            return View(new SpotInputViewModel());
+            // AddSpot functionality has been removed. Redirect to home.
+            return RedirectToAction("Index");
         }
 
         [HttpPost]
         public IActionResult AddSpot(SpotInputViewModel model)
         {
-            if (!ModelState.IsValid)
-                return View(model);
-
-            var spot = new Spot
-            {
-                Name = model.Name,
-                District = model.District,
-                Barangay = model.Barangay,
-                Type = model.Type,
-                Description = model.Description,
-                Coordinates = new Coordinates
-                {
-                    Lat = model.Latitude,
-                    Lng = model.Longitude
-                },
-                Tags = model.Tags ?? new List<string>(),
-                Accessibility = new Accessibility
-                {
-                    PublicTransport = model.PublicTransport,
-                    ParkingAvailable = model.ParkingAvailable,
-                    WheelchairAccessible = model.WheelchairAccessible
-                },
-                MapOpenHours = new MapOpenHours
-                {
-                    Url = model.MapUrl
-                },
-                Rating = 0,
-                AddedBy = "admin",
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _spotService.AddSpot(spot);
+            // AddSpot POST disabled. Redirect to home.
             return RedirectToAction("Index");
         }
     }

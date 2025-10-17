@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("QCGO")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3a6100428c40d689335130f33240317689151b33")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3739b7f695adfb98c0913617bbcdd27a6dbb96c9")]
 [assembly: System.Reflection.AssemblyProductAttribute("QCGO")]
 [assembly: System.Reflection.AssemblyTitleAttribute("QCGO")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
