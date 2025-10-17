@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "bAU05XHrxq0=",
+  "dgSpecHash": "oAKcNh/11pk=",
   "success": true,
-  "projectFilePath": "C:\\Users\\markm\\Documents\\QCGO-1\\QCGO\\QCGO.csproj",
+  "projectFilePath": "C:\\Users\\markm\\Documents\\QCGO\\QCGO\\QCGO\\QCGO.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\markm\\.nuget\\packages\\awssdk.core\\3.7.100.14\\awssdk.core.3.7.100.14.nupkg.sha512",
     "C:\\Users\\markm\\.nuget\\packages\\awssdk.securitytoken\\3.7.100.14\\awssdk.securitytoken.3.7.100.14.nupkg.sha512",

@@ -27,4 +27,62 @@
             }
         </div>
     </div>
+
+    <!-- 🗺️ Single Spot Map Section -->
+    @if (Model != null)
+    {
+        <h2>Location</h2>
+        <div id="map" style="height: 400px; border-radius: 8px; margin-top: 20px;"></div>
+
+        <!-- Leaflet CDN -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+        <script>
+            // Initialize the map
+            var map = L.map('map');
+
+            // Add free OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Get coordinates for the current spot
+            var spot = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+            
+            var lat = null, lng = null;
+            
+            // Try nested coordinates first, then top-level properties
+            if (spot && spot.coordinates) {
+                lat = spot.coordinates.lat ?? spot.coordinates.Lat ?? null;
+                lng = spot.coordinates.lng ?? spot.coordinates.Lng ?? null;
+            }
+            lat = lat ?? spot.latitude ?? spot.Latitude ?? null;
+            lng = lng ?? spot.longitude ?? spot.Longitude ?? null;
+
+            // Convert to numbers if they are strings
+            if (lat !== null && typeof lat !== 'number') lat = Number(lat);
+            if (lng !== null && typeof lng !== 'number') lng = Number(lng);
+
+            // Check if we have valid coordinates
+            if (typeof lat === 'number' && typeof lng === 'number' && isFinite(lat) && isFinite(lng) &&
+                lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+                
+                // Add marker for the single spot
+                var marker = L.marker([lat, lng])
+                    .addTo(map)
+                    .bindPopup("<b>" + (spot.name || '') + "</b><br>" + (spot.district || ''))
+                    .openPopup();
+
+                // Center map on the marker with a zoomed-in view
+                map.setView([lat, lng], 15); // Zoom level 15 for closer view
+
+            } else {
+                // If no valid coordinates, center on Quezon City with default zoom
+                map.setView([14.6760, 121.0437], 12);
+                console.warn('No valid coordinates found for spot:', spot.name || spot.id);
+            }
+        </script>
+    }
 </div>

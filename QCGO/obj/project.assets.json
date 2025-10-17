@@ -784,11 +784,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\markm\\Documents\\QCGO-1\\QCGO\\QCGO.csproj",
+      "projectUniqueName": "C:\\Users\\markm\\Documents\\QCGO\\QCGO\\QCGO\\QCGO.csproj",
       "projectName": "QCGO",
-      "projectPath": "C:\\Users\\markm\\Documents\\QCGO-1\\QCGO\\QCGO.csproj",
+      "projectPath": "C:\\Users\\markm\\Documents\\QCGO\\QCGO\\QCGO\\QCGO.csproj",
       "packagesPath": "C:\\Users\\markm\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\markm\\Documents\\QCGO-1\\QCGO\\obj\\",
+      "outputPath": "C:\\Users\\markm\\Documents\\QCGO\\QCGO\\QCGO\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

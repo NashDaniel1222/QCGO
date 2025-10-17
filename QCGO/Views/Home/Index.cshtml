@@ -21,8 +21,6 @@
     }
 }
 
-
-
 @if (Model != null && Model.Any())
 {
     <div class="spots-grid">
@@ -46,6 +44,70 @@
             </a>
         }
     </div>
+
+    <!-- 🗺️ Leaflet Map Section -->
+    <h2>Map of Tourist Spots</h2>
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+        <div id="markerBadge" style="background:#0d6efd; color:#fff; padding:6px 10px; border-radius:999px; font-weight:600;">Markers: 0</div>
+        <div style="flex:1"></div>
+    </div>
+    <div id="map" style="height: 500px; border-radius: 8px; margin-top: 6px;"></div>
+
+    <!-- Leaflet CDN -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // Initialize the map centered on Quezon City
+        var map = L.map('map').setView([14.6760, 121.0437], 12);
+
+        // Add free OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Pass the spots data from C# to JavaScript
+        var spots = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+        if (spots && !Array.isArray(spots)) {
+            spots = [spots];
+        }
+
+        var markerCount = 0;
+        var markerBadgeEl = document.getElementById('markerBadge');
+        
+        if (Array.isArray(spots)) {
+            spots.forEach(function (s) {
+                var lat = null, lng = null;
+                if (s && s.coordinates) {
+                    lat = s.coordinates.lat ?? s.coordinates.Lat ?? null;
+                    lng = s.coordinates.lng ?? s.coordinates.Lng ?? null;
+                }
+                lat = lat ?? s.latitude ?? s.Latitude ?? null;
+                lng = lng ?? s.longitude ?? s.Longitude ?? null;
+
+                if (lat !== null && typeof lat !== 'number') lat = Number(lat);
+                if (lng !== null && typeof lng !== 'number') lng = Number(lng);
+
+                if (typeof lat === 'number' && typeof lng === 'number' && isFinite(lat) && isFinite(lng)) {
+                    if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+                        L.marker([lat, lng])
+                            .addTo(map)
+                            .bindPopup("<b>" + (s.name || '') + "</b><br>" + (s.district || ''));
+                        markerCount++;
+                        if (markerBadgeEl) markerBadgeEl.textContent = 'Markers: ' + markerCount;
+                    }
+                }
+            });
+        }
+
+        // Fit map bounds to markers
+        var markers = Object.values(map._layers).filter(function (l) { return l instanceof L.Marker; });
+        if (markers.length > 0) {
+            var group = new L.featureGroup(markers);
+            map.fitBounds(group.getBounds().pad(0.1));
+        }
+    </script>
 }
 else
 {
