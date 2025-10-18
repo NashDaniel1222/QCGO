@@ -1,0 +1,70 @@
+## Ignore Visual Studio, .NET build outputs and common editor files
+
+# Build / bin / obj
+bin/
+obj/
+**/bin/
+**/obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio generated files
+*.VC.db
+*.VC.opendb
+*.sdf
+*.dbmdl
+*.opendb
+
+# Rider
+.idea/
+
+# VS Code
+.vscode/
+
+# Test results
+TestResults/
+
+# NCrunch
+.ncrunch*
+
+# DotCover
+*.dotCover
+
+# ASP.NET / static web assets and scoped CSS
+staticwebassets.build.json
+staticwebassets.build.*
+*.staticwebassets.*.json
+scopedcss/
+**/scopedcss/
+
+# NuGet
+packages/
+*.nupkg
+NuGet.exe
+
+# Files created by the SDK / tooling
+*.dbmdl
+*.userprefs
+project.lock.json
+project.assets.json
+project.nuget.cache
+
+# Runtime and other generated files
+*.dll
+*.exe
+*.pdb
+*.deps.json
+*.runtimeconfig.json
+
+# Misc
+*.log
+*.cache
+
+# Keep project files (do not ignore appsettings by default)
+# If you intentionally want to ignore other config files, add them explicitly.
+
