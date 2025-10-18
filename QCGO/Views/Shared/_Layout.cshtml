@@ -1,6 +1,8 @@
 ﻿@{
     Layout = null;
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    // Get all selected districts as a list
+    var selectedDistricts = Context.Request.Query["district"].ToString().Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -26,7 +28,7 @@
                 </svg>
             </button>
             <div class="sidebar-content">
-                @{ var currentTag = Context.Request.Query["tag"].ToString(); var currentDistrict = Context.Request.Query["district"].ToString(); }
+                @{ var currentTag = Context.Request.Query["tag"].ToString(); }
                 <div class="sidebar-section">
                     <button class="sidebar-hide-btn" onclick="toggleSidebar()">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -59,6 +61,10 @@
                                 <form method="get" action="@Url.Action("Index","Home")" class="sidebar-tag-form">
                                     @* Remove tag filter by not including tag param *@
                                     @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) { <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> }
+                                    @foreach (var district in selectedDistricts)
+                                    {
+                                        <input type="hidden" name="district" value="@district" />
+                                    }
                                     <button type="submit" class="sidebar-tag active">@tag</button>
                                 </form>
                             }
@@ -67,6 +73,10 @@
                                 <form method="get" action="@Url.Action("Index","Home")" class="sidebar-tag-form">
                                     <input type="hidden" name="tag" value="@tag" />
                                     @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) { <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> }
+                                    @foreach (var district in selectedDistricts)
+                                    {
+                                        <input type="hidden" name="district" value="@district" />
+                                    }
                                     <button type="submit" class="sidebar-tag">@tag</button>
                                 </form>
                             }
@@ -82,76 +92,53 @@
                         District
                     </div>
                     <div class="sidebar-tags">
-                        @if (currentDistrict == "District 1") {
+                        @{
+                            var districts = new List<string> { "District 1", "District 2", "District 3", "District 4", "District 5", "District 6" };
+                        }
+                        @foreach (var district in districts)
+                        {
+                            var isSelected = selectedDistricts.Contains(district);
+                            
                             <form method="get" action="@Url.Action("Index","Home")" class="sidebar-tag-form">
-                                @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) { <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> }
-                                <button type="submit" class="sidebar-tag active">District 1</button>
-                            </form>
-                        } else {
-                            <form method="get" action="@Url.Action("Index","Home")" class="sidebar-tag-form">
-                                <input type="hidden" name="district" value="District 1" />
-                                @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) { <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> }
-                                <button type="submit" class="sidebar-tag">District 1</button>
+                                @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) 
+                                { 
+                                    <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> 
+                                }
+                                @if (!string.IsNullOrEmpty(currentTag)) 
+                                { 
+                                    <input type="hidden" name="tag" value="@currentTag" /> 
+                                }
+                                
+                                @foreach (var selectedDistrict in selectedDistricts)
+                                {
+                                    if (selectedDistrict != district) // Include all other selected districts
+                                    {
+                                        <input type="hidden" name="district" value="@selectedDistrict" />
+                                    }
+                                }
+                                
+                                @if (!isSelected)
+                                {
+                                    <input type="hidden" name="district" value="@district" />
+                                }
+                                
+                                <button type="submit" class="sidebar-tag @(isSelected ? "active" : "")">@district</button>
                             </form>
                         }
-                        @if (currentDistrict == "District 2") {
+                        
+                        @* Clear all districts button *@
+                        @if (selectedDistricts.Any())
+                        {
                             <form method="get" action="@Url.Action("Index","Home")" class="sidebar-tag-form">
-                                @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) { <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> }
-                                <button type="submit" class="sidebar-tag active">District 2</button>
-                            </form>
-                        } else {
-                            <form method="get" action="@Url.Action("Index","Home")" class="sidebar-tag-form">
-                                <input type="hidden" name="district" value="District 2" />
-                                @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) { <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> }
-                                <button type="submit" class="sidebar-tag">District 2</button>
-                            </form>
-                        }
-                        @if (currentDistrict == "District 3") {
-                            <form method="get" action="@Url.Action("Index","Home")" class="sidebar-tag-form">
-                                @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) { <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> }
-                                <button type="submit" class="sidebar-tag active">District 3</button>
-                            </form>
-                        } else {
-                            <form method="get" action="@Url.Action("Index","Home")" class="sidebar-tag-form">
-                                <input type="hidden" name="district" value="District 3" />
-                                @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) { <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> }
-                                <button type="submit" class="sidebar-tag">District 3</button>
-                            </form>
-                        }
-                        @if (currentDistrict == "District 4") {
-                            <form method="get" action="@Url.Action("Index","Home")" class="sidebar-tag-form">
-                                @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) { <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> }
-                                <button type="submit" class="sidebar-tag active">District 4</button>
-                            </form>
-                        } else {
-                            <form method="get" action="@Url.Action("Index","Home")" class="sidebar-tag-form">
-                                <input type="hidden" name="district" value="District 4" />
-                                @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) { <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> }
-                                <button type="submit" class="sidebar-tag">District 4</button>
-                            </form>
-                        }
-                        @if (currentDistrict == "District 5") {
-                            <form method="get" action="@Url.Action("Index","Home")" class="sidebar-tag-form">
-                                @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) { <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> }
-                                <button type="submit" class="sidebar-tag active">District 5</button>
-                            </form>
-                        } else {
-                            <form method="get" action="@Url.Action("Index","Home")" class="sidebar-tag-form">
-                                <input type="hidden" name="district" value="District 5" />
-                                @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) { <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> }
-                                <button type="submit" class="sidebar-tag">District 5</button>
-                            </form>
-                        }
-                        @if (currentDistrict == "District 6") {
-                            <form method="get" action="@Url.Action("Index","Home")" class="sidebar-tag-form">
-                                @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) { <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> }
-                                <button type="submit" class="sidebar-tag active">District 6</button>
-                            </form>
-                        } else {
-                            <form method="get" action="@Url.Action("Index","Home")" class="sidebar-tag-form">
-                                <input type="hidden" name="district" value="District 6" />
-                                @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) { <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> }
-                                <button type="submit" class="sidebar-tag">District 6</button>
+                                @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) 
+                                { 
+                                    <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> 
+                                }
+                                @if (!string.IsNullOrEmpty(currentTag)) 
+                                { 
+                                    <input type="hidden" name="tag" value="@currentTag" /> 
+                                }
+                                <button type="submit" class="sidebar-tag clear-all">Clear All</button>
                             </form>
                         }
                     </div>
@@ -178,19 +165,7 @@
                        aria-current="@(currentAction == "Index" ? "page" : null)">
                         Home
                     </a>
-                    <a href="@Url.Action("AddSpot", "Home")"
-                       class="header-nav-btn @(currentAction == "AddSpot" ? "active" : "")"
-                       aria-current="@(currentAction == "AddSpot" ? "page" : null)"
-                       title="Add a Spot">
-                        <span class="header-spot-icon">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="7" cy="17" r="3" />
-                                <circle cx="17" cy="17" r="3" />
-                                <path d="M7 17V5M17 17V5M2 17l3-12h3m10 0h3l3 12" />
-                            </svg>
-                        </span>
-                        <span class="header-add-spot-text">Add a Spot</span>
-                    </a>
+                    @* Add a Spot removed *@
                 </nav>
                 <div class="header-right">
                     <form class="header-search" role="search" method="get" action="@Url.Action("Index","Home")">
@@ -200,14 +175,35 @@
                         {
                             <input type="hidden" name="tag" value="@(Context.Request.Query["tag"].ToString())" />
                         }
-                        @if (!string.IsNullOrEmpty(Context.Request.Query["district"]))
+                        @foreach (var district in selectedDistricts)
                         {
-                            <input type="hidden" name="district" value="@(Context.Request.Query["district"].ToString())" />
+                            <input type="hidden" name="district" value="@district" />
                         }
                         <button type="submit" aria-label="Search">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
                         </button>
                     </form>
+                    <div class="header-actions">
+                        @if (User?.Identity?.IsAuthenticated == true)
+                        {
+                            var username = User.Identity.Name ?? "";
+                            <div class="account-pill" title="@username">
+                                <button class="account-icon" aria-label="Account">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                </button>
+                                <div class="account-popover">
+                                    <div class="account-username">@username</div>
+                                    <form method="post" asp-controller="Account" asp-action="Logout">
+                                        <button type="submit" class="btn logout-btn">Logout</button>
+                                    </form>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <a class="btn header-login" href="@Url.Action("Login","Account")">Login</a>
+                        }
+                    </div>
                 </div>
             </header>
             <main class="content">
