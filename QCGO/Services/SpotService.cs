@@ -88,7 +88,9 @@ namespace QCGO.Services
             }
         }
 
-        public List<Spot> Search(string? q, string? tag = null, string? district = null)
+        // Accept single or multiple tag/district values. Keep backward-compatible overload by allowing callers
+        // to pass comma-separated strings or arrays handled in controller.
+        public List<Spot> Search(string? q, IEnumerable<string>? tags = null, IEnumerable<string>? districts = null)
         {
             if (!_connected || _spots == null) return new List<Spot>();
 
@@ -104,14 +106,24 @@ namespace QCGO.Services
                     filters.Add(Builders<Spot>.Filter.Or(nameFilter, barangayFilter, tagsFilter));
                 }
 
-                if (!string.IsNullOrWhiteSpace(tag))
+                // Tags: match any of the provided tags. The Spot document stores tags as an array, so use $in
+                if (tags != null)
                 {
-                    filters.Add(Builders<Spot>.Filter.Eq("tags", tag));
+                    var tagList = tags.Where(t => !string.IsNullOrWhiteSpace(t)).Select(t => t.Trim()).ToList();
+                    if (tagList.Count > 0)
+                    {
+                        filters.Add(Builders<Spot>.Filter.In("tags", tagList));
+                    }
                 }
 
-                if (!string.IsNullOrWhiteSpace(district))
+                // Districts: match any of the provided district values
+                if (districts != null)
                 {
-                    filters.Add(Builders<Spot>.Filter.Eq("district", district));
+                    var districtList = districts.Where(d => !string.IsNullOrWhiteSpace(d)).Select(d => d.Trim()).ToList();
+                    if (districtList.Count > 0)
+                    {
+                        filters.Add(Builders<Spot>.Filter.In("district", districtList));
+                    }
                 }
 
                 var finalFilter = filters.Count == 0
@@ -151,6 +163,34 @@ namespace QCGO.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while aggregating top tags in MongoDB.");
+                return new List<string>();
+            }
+        }
+
+        // Return all distinct tags across the spots collection, sorted alphabetically.
+        public List<string> GetAllTags()
+        {
+            if (!_connected || _spots == null) return new List<string>();
+
+            try
+            {
+                // Use an aggregation pipeline to unwind tags and return distinct tag names sorted ascending
+                var pipeline = new[]
+                {
+                    new BsonDocument("$unwind", "$tags"),
+                    new BsonDocument("$group", new BsonDocument
+                    {
+                        { "_id", "$tags" }
+                    }),
+                    new BsonDocument("$sort", new BsonDocument("_id", 1))
+                };
+
+                var result = _spots.Aggregate<BsonDocument>(pipeline).ToList();
+                return result.Select(doc => doc["_id"].AsString).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while aggregating all tags in MongoDB.");
                 return new List<string>();
             }
         }

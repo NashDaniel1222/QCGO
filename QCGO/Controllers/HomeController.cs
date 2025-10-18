@@ -13,10 +13,11 @@ namespace QCGO.Controllers
             _spotService = spotService;
         }
 
-        public IActionResult Index(string? q, string? tag, string? district)
+        // Support multiple tag/district query values (e.g. ?tag=Art&tag=Nature)
+        public IActionResult Index(string? q, string[]? tag, string[]? district)
         {
             List<Spot> spots;
-            if (!string.IsNullOrWhiteSpace(q) || !string.IsNullOrWhiteSpace(tag) || !string.IsNullOrWhiteSpace(district))
+            if (!string.IsNullOrWhiteSpace(q) || (tag != null && tag.Length > 0) || (district != null && district.Length > 0))
             {
                 spots = _spotService.Search(q, tag, district);
             }
@@ -26,9 +27,12 @@ namespace QCGO.Controllers
             }
 
             ViewData["SearchQuery"] = q ?? string.Empty;
-            ViewData["tag"] = tag ?? string.Empty;
-            ViewData["district"] = district ?? string.Empty;
+            // For views that expect a single string, join multiple values with commas so the UI can display them.
+            ViewData["tag"] = tag != null ? string.Join(",", tag) : string.Empty;
+            ViewData["district"] = district != null ? string.Join(",", district) : string.Empty;
+            // Provide a complete, stable list of categories for the UI
             ViewBag.TopTags = _spotService.GetTopTags(7);
+            ViewBag.AllTags = _spotService.GetAllTags();
 
             Debug.WriteLine($"[DEBUG] Spots fetched from DB: {spots.Count}");
 

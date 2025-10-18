@@ -317,13 +317,73 @@ html,body{height:100%;margin:0;font-family:Segoe UI, Roboto, "Helvetica Neue", A
     font-size:1em;
     margin-bottom:6px;
     cursor:pointer;
-    transition:background .15s;
+    transition:background .15s, transform .06s, box-shadow .12s;
     display:flex;
     align-items:center;
-    gap:4px;
+    gap:8px;
 }
 .sidebar-tags button:hover {
     background:#e5e7eb;
+    transform:translateY(-1px);
+}
+
+/* Explicit class used in markup for category buttons */
+.sidebar-tag {
+    /* inherit the same base look as .sidebar-tags button */
+    background: #f3f4f6;
+    color: #222;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 1em;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: background .15s, transform .06s, box-shadow .12s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sidebar-tag:hover {
+    background: #e5e7eb;
+    transform: translateY(-1px);
+}
+
+/* Active state: prominent accent background and light text */
+.sidebar-tag.active {
+    background: #2563eb; /* primary blue */
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(37,99,235,0.12);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Add a small checkmark indicator for active categories */
+.sidebar-tag.active::before {
+    content: '\2713';
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+    text-align: center;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+/* Focus state for keyboard users */
+.sidebar-tag:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+/* If the parent form has the active class, style the contained button accordingly */
+.sidebar-tag-form.active > .sidebar-tag {
+    background: #2563eb;
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(37,99,235,0.12);
+    border: 1px solid rgba(255,255,255,0.08);
 }
 .sidebar-hide-btn {
     background:transparent;
