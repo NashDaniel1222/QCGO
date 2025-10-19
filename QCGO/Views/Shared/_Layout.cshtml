@@ -1,6 +1,13 @@
 ﻿@{
     Layout = null;
-    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "Index";
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "Home";
+    // Build a default target URL for filter forms that uses the current action/controller
+    var filtersActionUrl = Url.Action(currentAction, currentController) ?? Url.Action("Index", "Home");
+
+    // Make query-based filters available globally in the layout (header + sidebar)
+    var currentTags = Context.Request.Query["tag"].ToArray();
+    var currentDistricts = Context.Request.Query["district"].ToArray();
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -38,15 +45,30 @@
         }
 
         .sidebar-tag.active:hover {
-            background-color: #2563eb;
-            border-color: #2563eb;
+            background-color: #3b82f6;
+            border-color: #3b82f6;
         }
+        /* Sidebar layout improvements */
+        .sidebar { width: 280px; background: #fff; border-right: 1px solid #e5e7eb; padding: 12px 10px; box-sizing: border-box; }
+        .sidebar-section { margin-bottom: 18px; }
+        .sidebar-title { font-size: 13px; font-weight:700; color:#374151; margin-bottom:8px; display:flex; align-items:center; gap:8px }
+        .sidebar-tags { display:flex; flex-wrap:wrap; gap:8px }
+        .sidebar-tag { padding:6px 10px; border-radius:8px; border:1px solid #e5e7eb; background:#f8fafc; color:#111; font-size:13px }
+    .sidebar-tag-form.active .sidebar-tag, .sidebar-tag.active { background:#3b82f6; color:#fff; border-color:#3b82f6 }
+        .sidebar-hide-btn { background:transparent; border:none; color:#6b7280; font-size:13px }
+        .sidebar-toggle { background:transparent; border:none; color:#111 }
     </style>
 </head>
 
 <body class="bg-gray-50">
     <div class="app-shell">
-        <aside class="sidebar" role="navigation" aria-label="Main sidebar">
+        @{
+            // Hide sidebar on district-related pages
+            var hideSidebar = (currentAction == "DistrictDashboard" || currentAction == "DistrictSuggestions");
+        }
+        @if (!hideSidebar)
+        {
+            <aside class="sidebar" role="navigation" aria-label="Main sidebar">
             <button class="sidebar-toggle" type="button" title="Expand sidebar" aria-label="Expand sidebar"
                 onclick="toggleSidebar()">
                 <!-- Hamburger icon -->
@@ -59,17 +81,9 @@
             </button>
             <div class="sidebar-content">
                 @{ 
-                    // Support multiple tag/district query values. Use arrays for easy contains/add/remove logic.
-                    var currentTags = Context.Request.Query["tag"].ToArray();
-                    var currentDistricts = Context.Request.Query["district"].ToArray();
+                    // Sidebar content uses the globally-declared currentTags/currentDistricts
                 }
-                <div class="sidebar-section">
-                    <button class="sidebar-hide-btn" onclick="toggleSidebar()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M6 19L18 12L6 5V19Z" fill="currentColor" /></svg>
-                        Hide Filters
-                    </button>
-                </div>
+                <!-- hide-filters button removed; hamburger toggle controls collapsing -->
                 
                 <!-- Categories Section -->
                 <div class="sidebar-section">
@@ -98,7 +112,7 @@
                         @foreach (var tag in tags)
                         {
                             var isTagActive = currentTags.Contains(tag);
-                            <form method="get" action="@Url.Action("Index","Home")" class="sidebar-tag-form @(isTagActive ? "active" : "")">
+                            <form method="get" action="@filtersActionUrl" class="sidebar-tag-form @(isTagActive ? "active" : "")">
                                 <!-- Preserve search term -->
                                 @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) { 
                                     <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> 
@@ -146,7 +160,7 @@
                         @foreach (var district in districts)
                         {
                             var isDistrictActive = currentDistricts.Contains(district);
-                            <form method="get" action="@Url.Action("Index","Home")" class="sidebar-tag-form @(isDistrictActive ? "active" : "")">
+                            <form method="get" action="@filtersActionUrl" class="sidebar-tag-form @(isDistrictActive ? "active" : "")">
                                 <!-- Preserve search term -->
                                 @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) { 
                                     <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> 
@@ -178,26 +192,13 @@
                     </div>
                 </div>
 
-                <!-- Sort Section -->
-                <div class="sidebar-section">
-                    <div class="sidebar-title">
-                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M3 6h18M3 12h18M3 18h18" />
-                        </svg>
-                        Sort by
-                    </div>
-                    <div class="sidebar-tags">
-                        <button class="sidebar-tag">Grade</button>
-                        <button class="sidebar-tag">Number of visits</button>
-                        <button class="sidebar-tag">Recent</button>
-                    </div>
-                </div>
+                <!-- Sort section removed per request -->
 
                 <!-- Clear Filters Button -->
                 @if (currentTags.Length > 0 || currentDistricts.Length > 0)
                 {
                     <div class="sidebar-section">
-                        <form method="get" action="@Url.Action("Index","Home")" class="w-full">
+                        <form method="get" action="@filtersActionUrl" class="w-full">
                             @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) { 
                                 <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> 
                             }
@@ -208,7 +209,8 @@
                     </div>
                 }
             </div>
-        </aside>
+            </aside>
+        }
 
         <div class="main-area">
             <header class="floating-header">
@@ -219,9 +221,19 @@
                        aria-current="@(currentAction == "Index" ? "page" : null)">
                         Home
                     </a>
+                    <a href="@Url.Action("QCMap", "Home")"
+                       class="header-nav-btn @(currentAction == "QCMap" ? "active" : "")"
+                       aria-current="@(currentAction == "QCMap" ? "page" : null)">
+                        QC Maps
+                    </a>
+                    <a href="@Url.Action("DistrictDashboard", "Home")"
+                       class="header-nav-btn @((currentAction == "DistrictDashboard" || currentAction == "DistrictSuggestions") ? "active" : "")"
+                       aria-current="@((currentAction == "DistrictDashboard" || currentAction == "DistrictSuggestions") ? "page" : null)">
+                        District
+                    </a>
                 </nav>
                 <div class="header-right">
-                    <form class="header-search" role="search" method="get" action="@Url.Action("Index","Home")">
+                    <form class="header-search" role="search" method="get" action="@filtersActionUrl">
                         <input type="text" name="q" value="@(Context.Request.Query["q"].ToString())" placeholder="Search..." aria-label="Search" />
                         <!-- Preserve existing filters when searching -->
                         @foreach (var t in currentTags) {

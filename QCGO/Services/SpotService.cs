@@ -45,13 +45,7 @@ namespace QCGO.Services
             }
         }
 
-        // ✅ Add new spot to MongoDB
-        public void AddSpot(Spot spot)
-        {
-            // AddSpot functionality removed/disabled. Keep method as no-op to avoid breaking calls.
-            _logger.LogInformation("AddSpot called but is disabled in this build.");
-            return;
-        }
+        // AddSpot functionality removed intentionally.
 
         public List<Spot> GetAll()
         {
