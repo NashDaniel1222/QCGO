@@ -28,7 +28,7 @@
         
         .hero-section {
             background: linear-gradient(rgba(7, 27, 47, 0.8), rgba(7, 27, 47, 0.9)), 
-                        url('/images/hero.svg') center/cover no-repeat;
+                        url('/images/hero.jpg') center/cover no-repeat;
             min-height: 80vh;
             display: flex;
             align-items: center;
@@ -96,7 +96,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div class="fs-3 fw-bold">QCGO</div>
                 <nav class="d-flex gap-4">
-                    <a href="/" class="nav-link text-[#cfe9ff] fw-semibold">Home</a>
+                    <a href="/Home/Index" class="nav-link text-[#cfe9ff] fw-semibold">Spots</a>
                     <a href="/Home/QCMap" class="nav-link text-[#cfe9ff] fw-semibold">QC Map</a>
                     <a href="/Account/Login" class="nav-link text-[#cfe9ff] fw-semibold">Login</a>
                 </nav>
@@ -129,74 +129,39 @@
 
                 <!-- Bootstrap Carousel -->
                 <div id="districtCarousel" class="carousel slide" data-bs-ride="carousel">
-                    <div class="carousel-inner">
-                        <div class="carousel-item active">
-                            <div class="row justify-content-center">
-                                <div class="col-md-8">
-                                    <div class="district-slide text-center">
-                                        <img src="/images/district1.svg" alt="District 1" class="img-fluid rounded-3 shadow-lg mb-4" style="height: 360px; width: 100%; object-fit: cover;">
-                                        <a href="#" class="btn px-4 py-2 mb-2 district-badge">DISTRICT 1</a>
-                                        <p class="text-gray-600 mt-3">The Spanish Colonial Core.</p>
+                        @{ 
+                            var districts = new[] {
+                                new { Id = 1, Name = "District 1", Description = "The Spanish Colonial Core." },
+                                new { Id = 2, Name = "District 2", Description = "Historic neighborhoods and parks." },
+                                new { Id = 3, Name = "District 3", Description = "Cultural centers and galleries." },
+                                new { Id = 4, Name = "District 4", Description = "Markets and local flavors." },
+                                new { Id = 5, Name = "District 5", Description = "Modern districts with skyline views." },
+                                new { Id = 6, Name = "District 6", Description = "Quiet residential pockets." }
+                            };
+                        }
+                        <div class="carousel-inner">
+                            @for (var i = 0; i < districts.Length; i++) {
+                                var d = districts[i];
+                                <div class="carousel-item @(i == 0 ? "active" : "")">
+                                    <div class="row justify-content-center">
+                                        <div class="col-md-8">
+                                            <div class="district-slide text-center">
+                                                @{
+                                                    var link = Url.Action("DistrictSuggestions", "Home", new { district = d.Name });
+                                                }
+                                                <a href="@link" class="text-decoration-none text-reset d-block mb-3">
+                                                    <img src="/images/district@(d.Id).svg" alt="@d.Name" class="img-fluid rounded-3 shadow-lg" style="height: 360px; width: 100%; object-fit: cover;">
+                                                    <div class="mt-3">
+                                                        <span class="district-badge d-inline-block px-4 py-2">DISTRICT @d.Id</span>
+                                                    </div>
+                                                </a>
+                                                <p class="text-gray-600 mt-3">@d.Description</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            }
                         </div>
-                        <div class="carousel-item">
-                            <div class="row justify-content-center">
-                                <div class="col-md-8">
-                                    <div class="district-slide text-center">
-                                        <img src="/images/district2.svg" alt="District 2" class="img-fluid rounded-3 shadow-lg mb-4" style="height: 360px; width: 100%; object-fit: cover;">
-                                        <a href="#" class="btn px-4 py-2 mb-2 district-badge">DISTRICT 2</a>
-                                        <p class="text-gray-600 mt-3">Historic neighborhoods and parks.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="carousel-item">
-                            <div class="row justify-content-center">
-                                <div class="col-md-8">
-                                    <div class="district-slide text-center">
-                                        <img src="/images/district3.svg" alt="District 3" class="img-fluid rounded-3 shadow-lg mb-4" style="height: 360px; width: 100%; object-fit: cover;">
-                                        <a href="#" class="btn px-4 py-2 mb-2 district-badge">DISTRICT 3</a>
-                                        <p class="text-gray-600 mt-3">Cultural centers and galleries.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="carousel-item">
-                            <div class="row justify-content-center">
-                                <div class="col-md-8">
-                                    <div class="district-slide text-center">
-                                        <img src="/images/district4.svg" alt="District 4" class="img-fluid rounded-3 shadow-lg mb-4" style="height: 360px; width: 100%; object-fit: cover;">
-                                        <a href="#" class="btn px-4 py-2 mb-2 district-badge">DISTRICT 4</a>
-                                        <p class="text-gray-600 mt-3">Markets and local flavors.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="carousel-item">
-                            <div class="row justify-content-center">
-                                <div class="col-md-8">
-                                    <div class="district-slide text-center">
-                                        <img src="/images/district5.svg" alt="District 5" class="img-fluid rounded-3 shadow-lg mb-4" style="height: 360px; width: 100%; object-fit: cover;">
-                                        <a href="#" class="btn px-4 py-2 mb-2 district-badge">DISTRICT 5</a>
-                                        <p class="text-gray-600 mt-3">Modern districts with skyline views.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="carousel-item">
-                            <div class="row justify-content-center">
-                                <div class="col-md-8">
-                                    <div class="district-slide text-center">
-                                        <img src="/images/district6.svg" alt="District 6" class="img-fluid rounded-3 shadow-lg mb-4" style="height: 360px; width: 100%; object-fit: cover;">
-                                        <a href="#" class="btn px-4 py-2 mb-2 district-badge">DISTRICT 6</a>
-                                        <p class="text-gray-600 mt-3">Quiet residential pockets.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                     <button class="carousel-control-prev" type="button" data-bs-target="#districtCarousel" data-bs-slide="prev">
                         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                         <span class="visually-hidden">Previous</span>
@@ -268,7 +233,7 @@
                         <p class="fs-5 mb-0">Start your journey today and discover the best of what QC has to offer.</p>
                     </div>
                     <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                        <a href="/Account/Login" class="btn btn-lg px-4 py-2 district-badge border-0">Get Started Now</a>
+                        <a href="/Home/Index" class="btn btn-lg px-4 py-2 district-badge border-0">Get Started Now</a>
                     </div>
                 </div>
             </div>
