@@ -532,6 +532,11 @@
                        aria-current="@(currentAction == "LandingPage" ? "page" : null)">
                         Home
                     </a>
+                    <a href="@Url.Action("Index", "Home")"
+                       class="header-nav-btn @(currentAction == "Index" ? "active" : "")"
+                       aria-current="@(currentAction == "Index" ? "page" : null)">
+                        Spots
+                    </a>
                     <a href="@Url.Action("QCMap", "Home")"
                        class="header-nav-btn @(currentAction == "QCMap" ? "active" : "")"
                        aria-current="@(currentAction == "QCMap" ? "page" : null)">
