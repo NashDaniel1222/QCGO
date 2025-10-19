@@ -2,72 +2,268 @@
     ViewData["Title"] = "District Dashboard";
 }
 
-<section class="district-dashboard">
-    <h1 style="text-align:center; margin-bottom:8px;">START YOUR ADVENTURE NOW!</h1>
-    <p style="text-align:center; color:#6b7280; margin-bottom:24px;">Here are the 6 districts of Quezon City</p>
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
-    <div class="district-carousel">
-        <div class="carousel-track">
-            @* District slides *@
-            @{ var districts = new[] {
-                new { Id = 1, Name = "District 1", Description = "The Spanish Colonial Core." },
-                new { Id = 2, Name = "District 2", Description = "Historic neighborhoods and parks." },
-                new { Id = 3, Name = "District 3", Description = "Cultural centers and galleries." },
-                new { Id = 4, Name = "District 4", Description = "Markets and local flavors." },
-                new { Id = 5, Name = "District 5", Description = "Modern districts with skyline views." },
-                new { Id = 6, Name = "District 6", Description = "Quiet residential pockets." }
-            };
-            }
-            @foreach (var d in districts)
-            {
-                var link = Url.Action("DistrictSuggestions", "Home", new { district = d.Name });
-                <div class="district-slide" data-district-id="@d.Id">
-                    <a href="@link" style="text-decoration:none; color:inherit; display:block; width:100%;">
-                        <div class="district-image" aria-hidden="true">
-                            @* Placeholder image — replace later with real images *@
-                            <img src="/images/district-placeholder.jpg" alt="@d.Name" />
-                        </div>
-                        <div class="district-meta">
-                            <div class="district-badge">DISTRICT @d.Id</div>
-                            <h3>@d.Name</h3>
-                            <p>@d.Description</p>
-                        </div>
+<style>
+    :root {
+        --qc-primary: #0b2540;
+        --qc-secondary: #18a2b3;
+        --qc-accent: #0ea5a5;
+        --qc-light: #f8fbfd;
+    }
+    
+    .district-dashboard {
+        padding: 2rem 0;
+        background: linear-gradient(to bottom, #f8fbfd, #ffffff);
+    }
+    
+    .district-carousel {
+        position: relative;
+        max-width: 900px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    
+    .carousel-track {
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+        height: 360px;
+        border-radius: 12px;
+    }
+    
+    .district-slide {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        box-sizing: border-box;
+        transition: transform 0.5s ease, opacity 0.5s ease;
+    }
+    
+    .district-image {
+        width: 100%;
+        height: 100%;
+        max-height: 280px;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+        background: #f3f4f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.3s ease;
+    }
+    
+    .district-image:hover {
+        transform: translateY(-5px);
+    }
+    
+    .district-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    
+    .district-meta {
+        text-align: center;
+        margin-top: 1rem;
+    }
+    
+    .district-badge {
+        display: inline-block;
+        background: var(--qc-accent);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .district-badge:hover {
+        background: var(--qc-secondary);
+        transform: scale(1.05);
+    }
+    
+    .carousel-controls {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .nav-btn {
+        background: var(--qc-primary);
+        color: white;
+        border: none;
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-btn:hover {
+        background: var(--qc-secondary);
+        transform: scale(1.1);
+    }
+    
+    .dots {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(0,0,0,0.12);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .dot.active {
+        background: var(--qc-primary);
+        transform: scale(1.2);
+    }
+    
+    .dot:hover {
+        background: var(--qc-secondary);
+    }
+    
+    .district-slide-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+    
+    .district-info-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        margin-top: 2rem;
+        border-left: 4px solid var(--qc-accent);
+    }
+    
+    @@media (max-width: 768px) {
+        .carousel-track {
+            height: 280px;
+        }
+        
+        .nav-btn {
+            width: 40px;
+            height: 40px;
+        }
+        
+        .district-dashboard {
+            padding: 1rem 0;
+        }
+    }
+    
+    @@media (max-width: 576px) {
+        .carousel-track {
+            height: 240px;
+        }
+        
+        .district-image {
+            max-height: 180px;
+        }
+    }
+</style>
+
+<section class="district-dashboard">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold text-[#04213a] mb-3">START YOUR ADVENTURE NOW!</h1>
+            <p class="fs-5 text-gray-600">Here are the 6 districts of Quezon City</p>
+        </div>
+
+        <div class="district-carousel">
+            <div class="carousel-track">
+                @* District slides *@
+                @{ 
+                    var districts = new[] {
+                        new { Id = 1, Name = "District 1", Description = "The Spanish Colonial Core." },
+                        new { Id = 2, Name = "District 2", Description = "Historic neighborhoods and parks." },
+                        new { Id = 3, Name = "District 3", Description = "Cultural centers and galleries." },
+                        new { Id = 4, Name = "District 4", Description = "Markets and local flavors." },
+                        new { Id = 5, Name = "District 5", Description = "Modern districts with skyline views." },
+                        new { Id = 6, Name = "District 6", Description = "Quiet residential pockets." }
+                    };
+                }
+                
+                @foreach (var d in districts)
+                {
+                    var link = Url.Action("DistrictSuggestions", "Home", new { district = d.Name });
+                    <div class="district-slide" data-district-id="@d.Id">
+                        <a href="@link" class="district-slide-link">
+                            <div class="district-image" aria-hidden="true">
+                                <img src="/images/district@(d.Id).svg" alt="@d.Name" />
+                            </div>
+                            <div class="district-meta">
+                                <div class="district-badge">DISTRICT @d.Id</div>
+                                <h3 class="fw-bold mt-2">@d.Name</h3>
+                                <p class="text-muted">@d.Description</p>
+                            </div>
+                        </a>
+                    </div>
+                }
+            </div>
+            
+            <div class="carousel-controls">
+                <button class="nav-btn prev" aria-label="Previous">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="dots" aria-hidden="true"></div>
+                <button class="nav-btn next" aria-label="Next">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Additional District Information -->
+        <div class="district-info-card mt-4">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h3 class="fw-bold text-[#04213a]">Discover Quezon City's Unique Districts</h3>
+                    <p class="mb-0">Each district offers its own unique charm and attractions. Click on any district to explore recommendations and plan your visit.</p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <a href="/Home/QCMap" class="btn district-badge px-4 py-2">
+                        <i class="fas fa-map-marked-alt me-2"></i> View Full Map
                     </a>
                 </div>
-            }
-        </div>
-        <div class="carousel-controls">
-            <button class="nav-btn prev" aria-label="Previous">◀</button>
-            <div class="dots" aria-hidden="true"></div>
-            <button class="nav-btn next" aria-label="Next">▶</button>
+            </div>
         </div>
     </div>
 </section>
 
-<style>
-    .district-carousel { position:relative; max-width:900px; margin:0 auto; display:flex; flex-direction:column; align-items:center; gap:12px }
-    .carousel-track { position:relative; overflow:hidden; width:640px; max-width:92%; height:360px; }
-
-    .district-slide { position:absolute; left:0; top:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:8px; box-sizing:border-box }
-
-    .district-image { width:100%; height:100%; max-height:360px; border-radius:12px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.12); background:#f3f4f6; display:flex; align-items:center; justify-content:center }
-    .district-image img { width:100%; height:100%; object-fit:cover; display:block }
-
-    .district-meta { text-align:center; margin-top:12px }
-    .district-badge { display:inline-block; background:#0ea5a5; color:white; padding:8px 14px; border-radius:8px; font-weight:700; margin-bottom:8px }
-
-    .carousel-controls { display:flex; align-items:center; gap:16px; justify-content:center }
-    .nav-btn { background:#012a4a; color:white; border:none; width:48px; height:48px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; font-size:18px; cursor:pointer }
-    .nav-btn:hover { background:#0b66a5 }
-    .dots { display:flex; gap:8px }
-    .dot { width:10px; height:10px; border-radius:50%; background:rgba(0,0,0,0.12) }
-    .dot.active { background:#012a4a }
-
-    @@media (max-width:900px) {
-        .carousel-track { height:240px }
-        .nav-btn { width:40px; height:40px }
-    }
-</style>
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
     (function(){
@@ -78,30 +274,120 @@
         var nextBtn = document.querySelector('.carousel-controls .next');
         var current = 0;
 
-        // create dots
+        // Create dots
         slides.forEach(function(_, i){
-            var d = document.createElement('div'); d.className = 'dot'; if (i===0) d.classList.add('active'); dotsContainer.appendChild(d);
+            var dot = document.createElement('div');
+            dot.className = 'dot';
+            if (i === 0) dot.classList.add('active');
+            
+            // Add click event to dots
+            dot.addEventListener('click', function() {
+                show(i);
+            });
+            
+            dotsContainer.appendChild(dot);
         });
 
         function updateDots(idx) {
-            var ds = dotsContainer.querySelectorAll('.dot'); ds.forEach(function(x,i){ x.classList.toggle('active', i===idx); });
+            var dots = dotsContainer.querySelectorAll('.dot');
+            dots.forEach(function(dot, i) {
+                dot.classList.toggle('active', i === idx);
+            });
         }
 
         function show(index) {
             index = (index + slides.length) % slides.length;
-            slides.forEach(function(s, i){ s.style.transform = 'translateX(' + ((i - index) * 100) + '%)'; s.style.transition = 'transform 360ms ease'; });
+            
+            slides.forEach(function(slide, i) {
+                slide.style.transform = 'translateX(' + ((i - index) * 100) + '%)';
+                slide.style.transition = 'transform 0.5s ease';
+                
+                // Add fade effect for non-active slides
+                if (i !== index) {
+                    slide.style.opacity = '0.7';
+                } else {
+                    slide.style.opacity = '1';
+                }
+            });
+            
             current = index;
             updateDots(current);
         }
 
-        prevBtn.addEventListener('click', function(e){ e.stopPropagation(); show(current - 1); });
-        nextBtn.addEventListener('click', function(e){ e.stopPropagation(); show(current + 1); });
+        // Event listeners for navigation buttons
+        prevBtn.addEventListener('click', function(e){
+            e.stopPropagation();
+            show(current - 1);
+        });
+        
+        nextBtn.addEventListener('click', function(e){
+            e.stopPropagation();
+            show(current + 1);
+        });
 
         // Initialize positions
-        slides.forEach(function(s, i){ s.style.position = 'absolute'; s.style.left = '0'; s.style.top = '0'; s.style.width = '100%'; s.style.transform = 'translateX(' + (i*100) + '%)'; });
+        slides.forEach(function(slide, i){
+            slide.style.position = 'absolute';
+            slide.style.left = '0';
+            slide.style.top = '0';
+            slide.style.width = '100%';
+            slide.style.transform = 'translateX(' + (i * 100) + '%)';
+            
+            // Set initial opacity
+            if (i !== 0) {
+                slide.style.opacity = '0.7';
+            }
+        });
+        
         show(0);
 
-        // keyboard support
-        document.addEventListener('keydown', function(e){ if (e.key==='ArrowLeft') show(current-1); if (e.key==='ArrowRight') show(current+1); });
+        // Auto-advance carousel
+        var autoAdvance = setInterval(function() {
+            show(current + 1);
+        }, 5000);
+        
+        // Pause auto-advance on hover
+        track.addEventListener('mouseenter', function() {
+            clearInterval(autoAdvance);
+        });
+        
+        track.addEventListener('mouseleave', function() {
+            autoAdvance = setInterval(function() {
+                show(current + 1);
+            }, 5000);
+        });
+
+        // Keyboard support
+        document.addEventListener('keydown', function(e){
+            if (e.key === 'ArrowLeft') {
+                show(current - 1);
+            }
+            if (e.key === 'ArrowRight') {
+                show(current + 1);
+            }
+        });
+        
+        // Touch swipe support for mobile
+        var startX = 0;
+        var endX = 0;
+        
+        track.addEventListener('touchstart', function(e) {
+            startX = e.touches[0].clientX;
+        });
+        
+        track.addEventListener('touchend', function(e) {
+            endX = e.changedTouches[0].clientX;
+            handleSwipe();
+        });
+        
+        function handleSwipe() {
+            if (startX - endX > 50) {
+                // Swipe left
+                show(current + 1);
+            } else if (endX - startX > 50) {
+                // Swipe right
+                show(current - 1);
+            }
+        }
     })();
 </script>

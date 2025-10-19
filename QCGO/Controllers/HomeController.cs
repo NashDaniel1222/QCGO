@@ -68,6 +68,14 @@ namespace QCGO.Controllers
             return View();
         }
 
+        // Landing page - default route target
+        public IActionResult LandingPage()
+        {
+            // Populate shared sidebar data so the layout renders consistently
+            PopulateSidebarData(null, null, null);
+            return View();
+        }
+
         // Show suggestions for a specific district and category (category maps to tags)
         public IActionResult DistrictSuggestions(string? district, string? category)
         {

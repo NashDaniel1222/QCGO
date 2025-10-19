@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="600" viewBox="0 0 1600 600">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1">
+      <stop offset="0" stop-color="#071b2f"/>
+      <stop offset="1" stop-color="#0b3b66"/>
+    </linearGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#g)"/>
+  <g fill="#ffffff" font-family="Segoe UI, Roboto, Arial" font-weight="700">
+    <text x="80" y="200" font-size="72">EXPLORE</text>
+    <text x="80" y="300" font-size="64" fill="#1fb6c6">QUEZON CITY</text>
+    <text x="80" y="360" font-size="20" fill="#cfeff6">Where Culture, Nature, and Adventure Meet</text>
+  </g>
+</svg>

@@ -1,0 +1,298 @@
+@{
+    Layout=null;
+}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>QCGO - Explore Quezon City</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        :root {
+            --qc-primary: #0b2540;
+            --qc-secondary: #18a2b3;
+            --qc-accent: #0ea5a5;
+            --qc-light: #f8fbfd;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            color: var(--qc-primary);
+        }
+        
+        .hero-section {
+            background: linear-gradient(rgba(7, 27, 47, 0.8), rgba(7, 27, 47, 0.9)), 
+                        url('/images/hero.svg') center/cover no-repeat;
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+        }
+        
+        .district-slide {
+            transition: transform 0.5s ease;
+        }
+        
+        .district-slide:hover {
+            transform: translateY(-10px);
+        }
+        
+        .feature-card {
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 10px 30px rgba(16, 24, 40, 0.06);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(16, 24, 40, 0.1);
+        }
+        
+        .carousel-control-prev, .carousel-control-next {
+            width: 50px;
+            height: 50px;
+            background-color: var(--qc-primary);
+            border-radius: 50%;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.8;
+        }
+        
+        .carousel-control-prev:hover, .carousel-control-next:hover {
+            opacity: 1;
+        }
+        
+        .district-badge {
+            background-color: var(--qc-accent);
+            color: white;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .district-badge:hover {
+            background-color: var(--qc-secondary);
+            color: white;
+        }
+        
+        .nav-link {
+            transition: color 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            color: var(--qc-secondary) !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="bg-[#06223b] text-white py-3">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="fs-3 fw-bold">QCGO</div>
+                <nav class="d-flex gap-4">
+                    <a href="/" class="nav-link text-[#cfe9ff] fw-semibold">Home</a>
+                    <a href="/Home/QCMap" class="nav-link text-[#cfe9ff] fw-semibold">QC Map</a>
+                    <a href="/Account/Login" class="nav-link text-[#cfe9ff] fw-semibold">Login</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-lg-6 text-white">
+                        <h1 class="display-1 fw-bold mb-3">EXPLORE</h1>
+                        <h2 class="display-3 fw-bold mb-4 text-[#18a2b3]">QUEZON CITY</h2>
+                        <p class="fs-5 mb-4 opacity-90">Where Culture, Nature, and Adventure Meet</p>
+                        <a href="#districts" class="btn btn-lg px-4 py-2 mt-3 district-badge border-0">Start Your Journey</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Districts Section -->
+        <section id="districts" class="py-5 bg-[#fbfdff]">
+            <div class="container">
+                <div class="text-center mb-5">
+                    <h2 class="display-4 fw-bold mb-3 text-[#04213a]">START YOUR ADVENTURE NOW!</h2>
+                    <p class="fs-5 text-gray-600">Here are the 6 districts of Quezon City</p>
+                </div>
+
+                <!-- Bootstrap Carousel -->
+                <div id="districtCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        <div class="carousel-item active">
+                            <div class="row justify-content-center">
+                                <div class="col-md-8">
+                                    <div class="district-slide text-center">
+                                        <img src="/images/district1.svg" alt="District 1" class="img-fluid rounded-3 shadow-lg mb-4" style="height: 360px; width: 100%; object-fit: cover;">
+                                        <a href="#" class="btn px-4 py-2 mb-2 district-badge">DISTRICT 1</a>
+                                        <p class="text-gray-600 mt-3">The Spanish Colonial Core.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="carousel-item">
+                            <div class="row justify-content-center">
+                                <div class="col-md-8">
+                                    <div class="district-slide text-center">
+                                        <img src="/images/district2.svg" alt="District 2" class="img-fluid rounded-3 shadow-lg mb-4" style="height: 360px; width: 100%; object-fit: cover;">
+                                        <a href="#" class="btn px-4 py-2 mb-2 district-badge">DISTRICT 2</a>
+                                        <p class="text-gray-600 mt-3">Historic neighborhoods and parks.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="carousel-item">
+                            <div class="row justify-content-center">
+                                <div class="col-md-8">
+                                    <div class="district-slide text-center">
+                                        <img src="/images/district3.svg" alt="District 3" class="img-fluid rounded-3 shadow-lg mb-4" style="height: 360px; width: 100%; object-fit: cover;">
+                                        <a href="#" class="btn px-4 py-2 mb-2 district-badge">DISTRICT 3</a>
+                                        <p class="text-gray-600 mt-3">Cultural centers and galleries.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="carousel-item">
+                            <div class="row justify-content-center">
+                                <div class="col-md-8">
+                                    <div class="district-slide text-center">
+                                        <img src="/images/district4.svg" alt="District 4" class="img-fluid rounded-3 shadow-lg mb-4" style="height: 360px; width: 100%; object-fit: cover;">
+                                        <a href="#" class="btn px-4 py-2 mb-2 district-badge">DISTRICT 4</a>
+                                        <p class="text-gray-600 mt-3">Markets and local flavors.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="carousel-item">
+                            <div class="row justify-content-center">
+                                <div class="col-md-8">
+                                    <div class="district-slide text-center">
+                                        <img src="/images/district5.svg" alt="District 5" class="img-fluid rounded-3 shadow-lg mb-4" style="height: 360px; width: 100%; object-fit: cover;">
+                                        <a href="#" class="btn px-4 py-2 mb-2 district-badge">DISTRICT 5</a>
+                                        <p class="text-gray-600 mt-3">Modern districts with skyline views.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="carousel-item">
+                            <div class="row justify-content-center">
+                                <div class="col-md-8">
+                                    <div class="district-slide text-center">
+                                        <img src="/images/district6.svg" alt="District 6" class="img-fluid rounded-3 shadow-lg mb-4" style="height: 360px; width: 100%; object-fit: cover;">
+                                        <a href="#" class="btn px-4 py-2 mb-2 district-badge">DISTRICT 6</a>
+                                        <p class="text-gray-600 mt-3">Quiet residential pockets.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#districtCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#districtCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="py-5 bg-gradient-to-b from-[#f8fbfd] to-white">
+            <div class="container">
+                <div class="text-center mb-5">
+                    <h2 class="display-4 fw-bold text-[#04213a]">WHY USE QCGO?</h2>
+                </div>
+                <div class="row justify-content-center g-4">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="feature-card card h-100 p-4 rounded-3">
+                            <div class="d-flex justify-content-center mb-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="height: 72px; width: 72px; background-color: #eef6fb;">
+                                    <i class="fas fa-clock fs-3 text-[#0b2540]"></i>
+                                </div>
+                            </div>
+                            <div class="card-body text-center">
+                                <h3 class="card-title fw-bold text-[#04213a] mb-3">We help you save time</h3>
+                                <p class="card-text text-gray-600">Your next adventure, planned in minutes.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="feature-card card h-100 p-4 rounded-3">
+                            <div class="d-flex justify-content-center mb-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="height: 72px; width: 72px; background-color: #eef6fb;">
+                                    <i class="fas fa-map-marked-alt fs-3 text-[#0b2540]"></i>
+                                </div>
+                            </div>
+                            <div class="card-body text-center">
+                                <h3 class="card-title fw-bold text-[#04213a] mb-3">Explore different places</h3>
+                                <p class="card-text text-gray-600">Various destinations, one easy map.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="feature-card card h-100 p-4 rounded-3">
+                            <div class="d-flex justify-content-center mb-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="height: 72px; width: 72px; background-color: #eef6fb;">
+                                    <i class="fas fa-location-arrow fs-3 text-[#0b2540]"></i>
+                                </div>
+                            </div>
+                            <div class="card-body text-center">
+                                <h3 class="card-title fw-bold text-[#04213a] mb-3">Accessible location</h3>
+                                <p class="card-text text-gray-600">Easy to reach, hard to forget.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Call to Action Section -->
+        <section class="py-5 bg-[#0b2540] text-white">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h2 class="fw-bold mb-3">Ready to explore Quezon City?</h2>
+                        <p class="fs-5 mb-0">Start your journey today and discover the best of what QC has to offer.</p>
+                    </div>
+                    <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                        <a href="/Account/Login" class="btn btn-lg px-4 py-2 district-badge border-0">Get Started Now</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#041525] text-[#cfe9ff] py-4">
+        <div class="container text-center">
+            <p class="mb-0">© 2025 QCGO! All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-advance carousel every 6 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const myCarousel = document.getElementById('districtCarousel');
+            const carousel = new bootstrap.Carousel(myCarousel, {
+                interval: 6000,
+                wrap: true
+            });
+        });
+    </script>
+</body>
+</html>
