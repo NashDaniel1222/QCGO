@@ -14,10 +14,17 @@ namespace QCGO.Controllers
         }
 
         // Support multiple tag/district query values (e.g. ?tag=Art&tag=Nature)
-        public IActionResult Index(string? q, string[]? tag, string[]? district)
+        public IActionResult Index(string? q, string[]? tag, string[]? district, string? group)
         {
             List<Spot> spots;
-            if (!string.IsNullOrWhiteSpace(q) || (tag != null && tag.Length > 0) || (district != null && district.Length > 0))
+            if (!string.IsNullOrWhiteSpace(group))
+            {
+                // Map group to member tags then search by those tags; do not treat member tags as UI-selected tags here.
+                var (groupsMap, _) = BuildCategoryGroups();
+                var memberTags = groupsMap.ContainsKey(group) ? groupsMap[group] : new List<string>();
+                spots = _spotService.Search(q, memberTags, district);
+            }
+            else if (!string.IsNullOrWhiteSpace(q) || (tag != null && tag.Length > 0) || (district != null && district.Length > 0))
             {
                 spots = _spotService.Search(q, tag, district);
             }
@@ -27,7 +34,7 @@ namespace QCGO.Controllers
             }
 
             // Populate sidebar / view data consistently via helper
-            PopulateSidebarData(q, tag, district);
+            PopulateSidebarData(q, tag, district, group);
 
             Debug.WriteLine($"[DEBUG] Spots fetched from DB: {spots.Count}");
 
@@ -40,15 +47,21 @@ namespace QCGO.Controllers
             var spot = _spotService.GetById(id);
             if (spot == null) return NotFound();
             // Ensure sidebar data is populated so the layout renders consistently
-            PopulateSidebarData(q, tag, district);
+            PopulateSidebarData(q, tag, district, null);
             return View(spot);
         }
 
         // New action: QC Map view that shows the Leaflet map for all (or filtered) spots
-        public IActionResult QCMap(string? q, string[]? tag, string[]? district)
+        public IActionResult QCMap(string? q, string[]? tag, string[]? district, string? group)
         {
             List<Spot> spots;
-            if (!string.IsNullOrWhiteSpace(q) || (tag != null && tag.Length > 0) || (district != null && district.Length > 0))
+            if (!string.IsNullOrWhiteSpace(group))
+            {
+                var (groupsMap, _) = BuildCategoryGroups();
+                var memberTags = groupsMap.ContainsKey(group) ? groupsMap[group] : new List<string>();
+                spots = _spotService.Search(q, memberTags, district);
+            }
+            else if (!string.IsNullOrWhiteSpace(q) || (tag != null && tag.Length > 0) || (district != null && district.Length > 0))
             {
                 spots = _spotService.Search(q, tag, district);
             }
@@ -57,7 +70,7 @@ namespace QCGO.Controllers
                 spots = _spotService.GetAll();
             }
 
-            PopulateSidebarData(q, tag, district);
+            PopulateSidebarData(q, tag, district, group);
             return View(spots);
         }
 
@@ -72,7 +85,7 @@ namespace QCGO.Controllers
         public IActionResult LandingPage()
         {
             // Populate shared sidebar data so the layout renders consistently
-            PopulateSidebarData(null, null, null);
+            PopulateSidebarData(null, null, null, null);
             return View();
         }
 
@@ -141,7 +154,7 @@ namespace QCGO.Controllers
             }
 
             // Keep sidebar data consistent if any (pass category as tag for display but no tag filtering)
-            PopulateSidebarData(null, null, string.IsNullOrEmpty(district) ? null : new[] { district });
+            PopulateSidebarData(null, null, string.IsNullOrEmpty(district) ? null : new[] { district }, null);
 
             ViewData["SelectedDistrict"] = district ?? string.Empty;
             ViewData["SelectedCategory"] = category ?? string.Empty;
@@ -152,7 +165,8 @@ namespace QCGO.Controllers
         // AddSpot functionality removed intentionally.
 
         // Helper to populate sidebar data that multiple actions and the layout expect.
-        private void PopulateSidebarData(string? q, string[]? tag, string[]? district)
+        // Overload: include selected group
+        private void PopulateSidebarData(string? q, string[]? tag, string[]? district, string? group)
         {
             ViewData["SearchQuery"] = q ?? string.Empty;
             // For views that expect a single string, join multiple values with commas so the UI can display them.
@@ -161,6 +175,150 @@ namespace QCGO.Controllers
             // Provide a complete, stable list of categories for the UI
             ViewBag.TopTags = _spotService.GetTopTags(7);
             ViewBag.AllTags = _spotService.GetAllTags();
+            // Expose counts so the layout can display accurate numbers
+            ViewBag.TagCounts = _spotService.GetTagCounts();
+            ViewBag.DistrictCounts = _spotService.GetDistrictCounts();
+            ViewBag.AllDistricts = _spotService.GetAllDistricts();
+            // Mark the selected group (if any) so the layout can highlight the grouped category instead of individual tags
+            ViewBag.SelectedGroup = group ?? string.Empty;
+            
+            // Build grouped categories (map similar tags into a group).
+            try
+            {
+                var tagCounts = ViewBag.TagCounts as Dictionary<string, int> ?? new Dictionary<string, int>();
+                var allTags = ViewBag.AllTags as List<string> ?? new List<string>();
+
+                // Define grouping keywords (lowercase) - first match wins
+                var groupKeywordMap = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+                {
+                    { "Dining & Food", new[] { "dining", "restaurant", "food", "eat", "eatery", "diner", "dining" } },
+                    { "Cafe & Coffee", new[] { "cafe", "coffee", "bakery" } },
+                    { "Shopping", new[] { "mall", "shopping", "boutique", "market" } },
+                    { "Sightseeing & Parks", new[] { "sightseeing", "view", "park", "museum", "gallery", "trail", "nature", "landmark" } },
+                    { "Art & Culture", new[] { "art", "gallery", "cultural", "museum", "exhibit" } },
+                    { "Outdoors & Nature", new[] { "nature", "beach", "ocean", "trail", "hike", "park" } },
+                    { "Wellness", new[] { "wellness", "spa", "gym", "fitness" } },
+                    { "Entertainment", new[] { "entertainment", "theater", "movie", "music", "concert" } },
+                    { "Family & Kids", new[] { "kids", "family", "playground", "school" } },
+                    { "Nightlife", new[] { "bar", "pub", "nightlife", "club" } }
+                };
+
+                var groups = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+                // Initialize group keys
+                foreach (var g in groupKeywordMap.Keys) groups[g] = new List<string>();
+                groups["Other"] = new List<string>();
+
+                foreach (var tagName in allTags)
+                {
+                    var name = tagName ?? string.Empty;
+                    var assigned = false;
+                    var lower = name.ToLowerInvariant();
+                    foreach (var kv in groupKeywordMap)
+                    {
+                        foreach (var kw in kv.Value)
+                        {
+                            if (lower.Contains(kw))
+                            {
+                                groups[kv.Key].Add(name);
+                                assigned = true;
+                                break;
+                            }
+                        }
+                        if (assigned) break;
+                    }
+                    if (!assigned)
+                    {
+                        groups["Other"].Add(name);
+                    }
+                }
+
+                // Build list of group objects with counts
+                var groupList = groups.Select(g => new
+                {
+                    Name = g.Key,
+                    Tags = g.Value.OrderBy(t => t).ToList(),
+                    Count = g.Value.Sum(t => tagCounts.ContainsKey(t) ? tagCounts[t] : 0)
+                })
+                // Exclude empty groups
+                .Where(g => g.Count > 0)
+                .OrderByDescending(g => g.Count)
+                .Take(12) // show up to 12 grouped categories
+                .ToList();
+
+                ViewBag.GroupedCategories = groupList;
+                // Also expose member tags for the selected group so the layout can mark individual tags when searched
+                if (!string.IsNullOrEmpty(group) && groups.ContainsKey(group))
+                {
+                    ViewBag.GroupMemberTags = groups[group];
+                }
+                else
+                {
+                    ViewBag.GroupMemberTags = new List<string>();
+                }
+            }
+            catch
+            {
+                ViewBag.GroupedCategories = new List<object>();
+            }
+        }
+
+        // Helper that returns the groups mapping and a prepared list for the view. Reusable by actions.
+        private (Dictionary<string, List<string>> groupsMap, List<object> groupList) BuildCategoryGroups()
+        {
+            var tagCounts = _spotService.GetTagCounts() ?? new Dictionary<string, int>();
+            var allTags = _spotService.GetAllTags() ?? new List<string>();
+
+            var groupKeywordMap = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+                {
+                    { "Dining & Food", new[] { "dining", "restaurant", "food", "eat", "eatery", "diner", "dining" } },
+                    { "Cafe & Coffee", new[] { "cafe", "coffee", "bakery" } },
+                    { "Shopping", new[] { "mall", "shopping", "boutique", "market" } },
+                    { "Sightseeing & Parks", new[] { "sightseeing", "view", "park", "museum", "gallery", "trail", "nature", "landmark" } },
+                    { "Art & Culture", new[] { "art", "gallery", "cultural", "museum", "exhibit" } },
+                    { "Outdoors & Nature", new[] { "nature", "beach", "ocean", "trail", "hike", "park" } },
+                    { "Wellness", new[] { "wellness", "spa", "gym", "fitness" } },
+                    { "Entertainment", new[] { "entertainment", "theater", "movie", "music", "concert" } },
+                    { "Family & Kids", new[] { "kids", "family", "playground", "school" } },
+                    { "Nightlife", new[] { "bar", "pub", "nightlife", "club" } }
+                };
+
+            var groups = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var g in groupKeywordMap.Keys) groups[g] = new List<string>();
+            groups["Other"] = new List<string>();
+
+            foreach (var tagName in allTags)
+            {
+                var name = tagName ?? string.Empty;
+                var assigned = false;
+                var lower = name.ToLowerInvariant();
+                foreach (var kv in groupKeywordMap)
+                {
+                    foreach (var kw in kv.Value)
+                    {
+                        if (lower.Contains(kw))
+                        {
+                            groups[kv.Key].Add(name);
+                            assigned = true;
+                            break;
+                        }
+                    }
+                    if (assigned) break;
+                }
+                if (!assigned) groups["Other"].Add(name);
+            }
+
+            var groupList = groups.Select(g => new
+            {
+                Name = g.Key,
+                Tags = g.Value.OrderBy(t => t).ToList(),
+                Count = g.Value.Sum(t => tagCounts.ContainsKey(t) ? tagCounts[t] : 0)
+            })
+            .Where(g => g.Count > 0)
+            .OrderByDescending(g => g.Count)
+            .Take(12)
+            .ToList<object>();
+
+            return (groups, groupList);
         }
     }
 }

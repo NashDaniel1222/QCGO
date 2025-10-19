@@ -5,9 +5,22 @@
     // Build a default target URL for filter forms that uses the current action/controller
     var filtersActionUrl = Url.Action(currentAction, currentController) ?? Url.Action("Index", "Home");
 
+    // Provide variables used by the sidebar (fallbacks if ViewBag entries are missing)
+    var tags = ViewBag.AllTags as List<string> ?? ViewBag.TopTags as List<string> ?? new List<string>();
+    var tagCounts = ViewBag.TagCounts as Dictionary<string, int> ?? new Dictionary<string, int>();
+    var districts = ViewBag.AllDistricts as List<string> ?? new List<string>();
+    var districtCounts = ViewBag.DistrictCounts as Dictionary<string, int> ?? new Dictionary<string, int>();
+    var grouped = ViewBag.GroupedCategories as IEnumerable<dynamic> ?? new List<dynamic>();
+    var selectedGroup = (ViewBag.SelectedGroup as string) ?? string.Empty;
+    var groupMemberTags = ViewBag.GroupMemberTags as List<string> ?? new List<string>();
+
     // Make query-based filters available globally in the layout (header + sidebar)
     var currentTags = Context.Request.Query["tag"].ToArray();
     var currentDistricts = Context.Request.Query["district"].ToArray();
+    var currentQ = Context.Request.Query["q"].ToString();
+    
+    // Determine if we're in search mode (show individual tags instead of groups)
+    var isSearchMode = !string.IsNullOrEmpty(currentQ);
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -37,6 +50,7 @@
 
         .sidebar-tag {
             transition: all 0.2s ease-in-out;
+            cursor: pointer;
         }
 
         .sidebar-tag:hover {
@@ -49,15 +63,260 @@
             border-color: #3b82f6;
         }
         /* Sidebar layout improvements */
-        .sidebar { width: 280px; background: #fff; border-right: 1px solid #e5e7eb; padding: 12px 10px; box-sizing: border-box; }
+        .sidebar { 
+            width: 280px; 
+            background: #fff; 
+            border-right: 1px solid #e5e7eb; 
+            padding: 12px 10px; 
+            box-sizing: border-box;
+            transition: width 0.3s ease;
+        }
         .sidebar-section { margin-bottom: 18px; }
-        .sidebar-title { font-size: 13px; font-weight:700; color:#374151; margin-bottom:8px; display:flex; align-items:center; gap:8px }
-        .sidebar-tags { display:flex; flex-wrap:wrap; gap:8px }
-        .sidebar-tag { padding:6px 10px; border-radius:8px; border:1px solid #e5e7eb; background:#f8fafc; color:#111; font-size:13px }
-    .sidebar-tag-form.active .sidebar-tag, .sidebar-tag.active { background:#3b82f6; color:#fff; border-color:#3b82f6 }
+        .sidebar-title { 
+            font-size: 13px; 
+            font-weight:700; 
+            color:#374151; 
+            margin-bottom:8px; 
+            display:flex; 
+            align-items:center; 
+            gap:8px; 
+            user-select: none;
+        }
+        .sidebar-tags { 
+            display:flex; 
+            flex-wrap:wrap; 
+            gap:8px;
+            transition: all 0.3s ease;
+        }
+        .sidebar-tag { 
+            padding:6px 10px; 
+            border-radius:8px; 
+            border:1px solid #e5e7eb; 
+            background:#f8fafc; 
+            color:#111; 
+            font-size:13px;
+            user-select: none;
+        }
+        .sidebar-tag-form.active .sidebar-tag, 
+        .sidebar-tag.active { 
+            background:#3b82f6; 
+            color:#fff; 
+            border-color:#3b82f6;
+        }
         .sidebar-hide-btn { background:transparent; border:none; color:#6b7280; font-size:13px }
-        .sidebar-toggle { background:transparent; border:none; color:#111 }
+        .sidebar-toggle { 
+            background:transparent; 
+            border:none; 
+            color:#111; 
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        /* New enhanced filter styles */
+        .filter-group {
+            margin-bottom: 25px;
+        }
+
+        .filter-group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .filter-group h3 {
+            font-size: 1.1rem;
+            color: #374151;
+            margin: 0;
+        }
+
+        .toggle-icon {
+            transition: all 0.3s ease;
+        }
+
+        .collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .filter-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .collapsed .filter-options {
+            display: none;
+        }
+
+        .filter-search {
+            width: 100%;
+            padding: 8px 12px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .filter-option {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 8px 5px;
+            border-radius: 4px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .filter-option:hover {
+            background-color: #f3f4f6;
+        }
+
+        .filter-option input {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .filter-option label {
+            cursor: pointer;
+            flex: 1;
+            font-size: 0.95rem;
+        }
+
+        .filter-count {
+            background-color: #3b82f6;
+            color: white;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 0.8rem;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .selected-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .selected-filter {
+            background-color: #3b82f6;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .selected-filter i {
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .selected-count {
+            font-size: 0.9rem;
+            color: #6b7280;
+            font-weight: normal;
+        }
+
+        /* Group container styles */
+        .group-container {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .group-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+            padding: 8px;
+            border-radius: 8px;
+            z-index: 50;
+            min-width: 220px;
+            margin-top: 4px;
+        }
+
+        .group-dropdown.show {
+            display: block;
+        }
+
+        .member-tag {
+            width: 100%;
+            text-align: left;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            cursor: pointer;
+        }
+
+        .member-tag:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Search mode specific styles */
+        .search-mode-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .search-mode-tag {
+            cursor: pointer;
+        }
+
+        /* Scrollbar Styling */
+        .filter-options::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .filter-options::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .filter-options::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+
+        .filter-options::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* Enhanced sidebar styles */
+        .sidebar.collapsed {
+            width: 60px;
+            overflow: hidden;
+        }
+
+        .sidebar.collapsed .sidebar-content {
+            display: none;
+        }
+
+        .sidebar.collapsed .sidebar-toggle {
+            margin: 0 auto;
+            display: block;
+        }
+
+        /* Hidden utility class */
+        .hidden {
+            display: none !important;
+        }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body class="bg-gray-50">
@@ -69,146 +328,198 @@
         @if (!hideSidebar)
         {
             <aside class="sidebar" role="navigation" aria-label="Main sidebar">
-            <button class="sidebar-toggle" type="button" title="Expand sidebar" aria-label="Expand sidebar"
-                onclick="toggleSidebar()">
-                <!-- Hamburger icon -->
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
-                    aria-hidden="true">
-                    <rect y="4" width="24" height="2" rx="1" fill="currentColor" />
-                    <rect y="11" width="24" height="2" rx="1" fill="currentColor" />
-                    <rect y="18" width="24" height="2" rx="1" fill="currentColor" />
-                </svg>
-            </button>
-            <div class="sidebar-content">
-                @{ 
-                    // Sidebar content uses the globally-declared currentTags/currentDistricts
-                }
-                <!-- hide-filters button removed; hamburger toggle controls collapsing -->
-                
-                <!-- Categories Section -->
-                <div class="sidebar-section">
-                    <div class="sidebar-title">
-                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <rect x="3" y="3" width="7" height="7" rx="2" />
-                            <rect x="14" y="3" width="7" height="7" rx="2" />
-                            <rect x="14" y="14" width="7" height="7" rx="2" />
-                            <rect x="3" y="14" width="7" height="7" rx="2" />
-                        </svg>
-                        Categories
-                    </div>
-                    <div class="sidebar-tags">
-                        @{
-                            // Prefer a full list of tags if provided by the controller; fall back to TopTags or hard-coded defaults
-                            var tags = ViewBag.AllTags as List<string>;
-                            if (tags == null || tags.Count == 0)
-                            {
-                                tags = ViewBag.TopTags as List<string>;
-                            }
-                            if (tags == null || tags.Count == 0)
-                            {
-                                tags = new List<string> { "Art", "Astronomy", "Nature", "Oceans", "Other", "Sunset", "Urban" };
-                            }
-                        }
-                        @foreach (var tag in tags)
+                <button class="sidebar-toggle" type="button" title="Expand sidebar" aria-label="Expand sidebar"
+                    onclick="toggleSidebar()">
+                    <!-- Hamburger icon -->
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden="true">
+                        <rect y="4" width="24" height="2" rx="1" fill="currentColor" />
+                        <rect y="11" width="24" height="2" rx="1" fill="currentColor" />
+                        <rect y="18" width="24" height="2" rx="1" fill="currentColor" />
+                    </svg>
+                </button>
+                <div class="sidebar-content">
+                  
+                    <!-- Selected Filters Display -->
+                    <div class="selected-filters" id="selected-filters">
+                        @if (!string.IsNullOrEmpty(selectedGroup))
                         {
-                            var isTagActive = currentTags.Contains(tag);
-                            <form method="get" action="@filtersActionUrl" class="sidebar-tag-form @(isTagActive ? "active" : "")">
-                                <!-- Preserve search term -->
-                                @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) { 
-                                    <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> 
-                                }
-                                
-                                <!-- Preserve other tags (except this one if it's active) -->
-                                @foreach (var t in currentTags) { 
-                                    @if (t != tag || !isTagActive) {
-                                        <input type="hidden" name="tag" value="@t" />
+                            <div class="selected-filter">
+                                Group: @selectedGroup 
+                                <i class="fas fa-times" onclick="removeFilter('group', '@selectedGroup')"></i>
+                            </div>
+                        }
+                        @foreach (var district in currentDistricts)
+                        {
+                            <div class="selected-filter">
+                                @district 
+                                <i class="fas fa-times" onclick="removeFilter('district', '@district')"></i>
+                            </div>
+                        }
+                        @foreach (var tag in currentTags)
+                        {
+                            <div class="selected-filter">
+                                @tag 
+                                <i class="fas fa-times" onclick="removeFilter('tag', '@tag')"></i>
+                            </div>
+                        }
+                    </div>
+                    
+                    <!-- Categories Section -->
+                    <div class="filter-group">
+                        <div class="filter-group-header" id="category-header">
+                            <h3 class="sidebar-title">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <rect x="3" y="3" width="7" height="7" rx="2" />
+                                    <rect x="14" y="3" width="7" height="7" rx="2" />
+                                    <rect x="14" y="14" width="7" height="7" rx="2" />
+                                    <rect x="3" y="14" width="7" height="7" rx="2" />
+                                </svg>
+                                Categories
+                            </h3>
+                            <i class="fas fa-chevron-down toggle-icon"></i>
+                        </div>
+                        <input type="text" class="filter-search" id="category-search" placeholder="Search categories..." value="@currentQ">
+                        
+                        <!-- Grouped Categories View (shown when not searching) -->
+                        <div id="grouped-categories" class="@(isSearchMode ? "hidden" : "")">
+                            <div class="sidebar-tags" style="margin-top:8px">
+                                @if (grouped != null) 
+                                {
+                                    foreach (var g in grouped)
+                                    {
+                                        var name = (string)g.Name;
+                                        var count = (int)g.Count;
+                                        var members = new List<string>();
+                                        try { 
+                                            members = ((IEnumerable<string>)g.Tags).ToList(); 
+                                        } catch { 
+                                            /* ignore if not present */ 
+                                        }
+                                        
+                                        var isGroupActive = selectedGroup == name;
+                                        
+                                        <div class="group-container @(isGroupActive ? "active" : "")">
+                                            @* Group toggle button *@
+                                            <button type="button" 
+                                                    class="sidebar-tag group-button @(isGroupActive ? "active" : "")" 
+                                                    data-group="@name"
+                                                    onclick="toggleGroup('@name')">
+                                                @name 
+                                                <span class="filter-count" style="margin-left:8px;">@count</span>
+                                            </button>
+
+                                            @* Dropdown toggle *@
+                                            @if (members.Any())
+                                            {
+                                                <button type="button" 
+                                                        class="group-dropdown-toggle sidebar-tag" 
+                                                        aria-expanded="false" 
+                                                        data-group="@name" 
+                                                        title="Show categories in @name"
+                                                        onclick="toggleDropdown('@name')">
+                                                    <i class="fas fa-caret-down"></i>
+                                                </button>
+
+                                                @* Dropdown panel *@
+                                                <div class="group-dropdown" id="dropdown-@name" data-group="@name">
+                                                    <div style="max-height:260px; overflow:auto; display:flex; flex-direction:column; gap:6px;">
+                                                        @foreach (var member in members)
+                                                        {
+                                                            var memberCount = tagCounts.ContainsKey(member) ? tagCounts[member] : 0;
+                                                            <button type="button" 
+                                                                    class="sidebar-tag member-tag" 
+                                                                    data-tag="@member"
+                                                                    onclick="selectMemberTag('@member')">
+                                                                @member 
+                                                                <span class="filter-count">@memberCount</span>
+                                                            </button>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
                                     }
                                 }
-                                
-                                <!-- Preserve districts -->
-                                @foreach (var d in currentDistricts) { 
-                                    <input type="hidden" name="district" value="@d" /> 
-                                }
-                                
-                                <!-- Add this tag if it's not active -->
-                                @if (!isTagActive)
-                                {
-                                    <input type="hidden" name="tag" value="@tag" />
-                                }
-                                
-                                <button type="submit" class="sidebar-tag @(isTagActive ? "active" : "")">
-                                    @tag @if (isTagActive) { <span class="ml-1">✓</span> }
-                                </button>
-                            </form>
-                        }
-                    </div>
-                </div>
-
-                <!-- District Section -->
-                <div class="sidebar-section">
-                    <div class="sidebar-title">
-                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="10" />
-                            <path d="M2 12h20" />
-                        </svg>
-                        District
-                    </div>
-                    <div class="sidebar-tags">
-                        @{
-                            var districts = new List<string> { "District 1", "District 2", "District 3", "District 4", "District 5", "District 6" };
-                        }
-                        @foreach (var district in districts)
-                        {
-                            var isDistrictActive = currentDistricts.Contains(district);
-                            <form method="get" action="@filtersActionUrl" class="sidebar-tag-form @(isDistrictActive ? "active" : "")">
-                                <!-- Preserve search term -->
-                                @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) { 
-                                    <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> 
-                                }
-                                
-                                <!-- Preserve tags -->
-                                @foreach (var t in currentTags) { 
-                                    <input type="hidden" name="tag" value="@t" /> 
-                                }
-                                
-                                <!-- Preserve other districts (except this one if it's active) -->
-                                @foreach (var d in currentDistricts) { 
-                                    @if (d != district || !isDistrictActive) {
-                                        <input type="hidden" name="district" value="@d" />
+                            </div>
+                        </div>
+                        
+                        <!-- Individual Tags View (shown when searching) -->
+                        <div id="individual-tags" class="search-mode-tags @(!isSearchMode ? "hidden" : "")" style="margin-top:8px">
+                            @foreach (var tagName in tags)
+                            {
+                                var isTagActive = currentTags.Contains(tagName);
+                                <form method="get" action="@filtersActionUrl" class="sidebar-tag-form @(isTagActive ? "active" : "") search-mode-tag">
+                                    @if (!string.IsNullOrEmpty(currentQ)) { 
+                                        <input type="hidden" name="q" value="@currentQ" /> 
                                     }
+                                    @foreach (var t in currentTags) { 
+                                        if (t != tagName || !isTagActive) { 
+                                            <input type="hidden" name="tag" value="@t" /> 
+                                        } 
+                                    }
+                                    @foreach (var d in currentDistricts) { 
+                                        <input type="hidden" name="district" value="@d" /> 
+                                    }
+                                    @if (!string.IsNullOrEmpty(selectedGroup)) {
+                                        <input type="hidden" name="group" value="@selectedGroup" />
+                                    }
+                                    @if (!isTagActive) { 
+                                        <input type="hidden" name="tag" value="@tagName" /> 
+                                    }
+                                    <button type="submit" class="sidebar-tag @(isTagActive ? "active" : "")">
+                                        @tagName
+                                        @if (tagCounts.ContainsKey(tagName))
+                                        {
+                                            <span class="filter-count" style="margin-left:8px;">@tagCounts[tagName]</span>
+                                        }
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- District Section -->
+                    <div class="filter-group">
+                        <div class="filter-group-header" id="district-header">
+                            <h3 class="sidebar-title">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <path d="M2 12h20" />
+                                </svg>
+                                District
+                            </h3>
+                            <i class="fas fa-chevron-down toggle-icon"></i>
+                        </div>
+                        <input type="text" class="filter-search" id="district-search" placeholder="Search districts...">
+                        <div class="filter-options" id="district-filters">
+                            @foreach (var district in districts)
+                            {
+                                var isDistrictActive = currentDistricts.Contains(district);
+                                <div class="filter-option">
+                                    <input type="checkbox" id="district-@district" value="@district" @(isDistrictActive ? "checked" : "") onchange="toggleDistrict('@district')">
+                                    <label for="district-@district" style="color:#111;">@district</label>
+                                    <span class="filter-count">@(districtCounts.ContainsKey(district) ? districtCounts[district] : 0)</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Clear Filters Button -->
+                    @if (currentTags.Length > 0 || currentDistricts.Length > 0 || !string.IsNullOrEmpty(selectedGroup))
+                    {
+                        <div class="sidebar-section">
+                            <form method="get" action="@filtersActionUrl" class="w-full" id="clear-filters-form">
+                                @if (!string.IsNullOrEmpty(currentQ)) { 
+                                    <input type="hidden" name="q" value="@currentQ" /> 
                                 }
-                                
-                                <!-- Add this district if it's not active -->
-                                @if (!isDistrictActive)
-                                {
-                                    <input type="hidden" name="district" value="@district" />
-                                }
-                                
-                                <button type="submit" class="sidebar-tag @(isDistrictActive ? "active" : "")">
-                                    @district @if (isDistrictActive) { <span class="ml-1">✓</span> }
+                                <button type="submit" class="w-full px-4 py-2 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors">
+                                    Clear All Filters
                                 </button>
                             </form>
-                        }
-                    </div>
+                        </div>
+                    }
                 </div>
-
-                <!-- Sort section removed per request -->
-
-                <!-- Clear Filters Button -->
-                @if (currentTags.Length > 0 || currentDistricts.Length > 0)
-                {
-                    <div class="sidebar-section">
-                        <form method="get" action="@filtersActionUrl" class="w-full">
-                            @if (!string.IsNullOrEmpty(Context.Request.Query["q"])) { 
-                                <input type="hidden" name="q" value="@(Context.Request.Query["q"].ToString())" /> 
-                            }
-                            <button type="submit" class="w-full px-4 py-2 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors">
-                                Clear All Filters
-                            </button>
-                        </form>
-                    </div>
-                }
-            </div>
             </aside>
         }
 
@@ -233,14 +544,17 @@
                     </a>
                 </nav>
                 <div class="header-right">
-                    <form class="header-search" role="search" method="get" action="@filtersActionUrl">
-                        <input type="text" name="q" value="@(Context.Request.Query["q"].ToString())" placeholder="Search..." aria-label="Search" />
+                    <form class="header-search" role="search" method="get" action="@filtersActionUrl" id="header-search-form">
+                        <input type="text" name="q" value="@currentQ" placeholder="Search categories..." aria-label="Search categories" id="header-search-input" />
                         <!-- Preserve existing filters when searching -->
                         @foreach (var t in currentTags) {
                             <input type="hidden" name="tag" value="@t" />
                         }
                         @foreach (var d in currentDistricts) {
                             <input type="hidden" name="district" value="@d" />
+                        }
+                        @if (!string.IsNullOrEmpty(selectedGroup)) {
+                            <input type="hidden" name="group" value="@selectedGroup" />
                         }
                         <button type="submit" aria-label="Search">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -301,7 +615,235 @@
                 localStorage.setItem('sidebar-collapsed', 'false');
             }
         }
+
+        // Initialize enhanced filter functionality
+        initEnhancedFilters();
+        
+        // Initialize search functionality
+        initSearchFunctionality();
     });
+
+    // Search functionality
+    function initSearchFunctionality() {
+        const headerSearchInput = document.getElementById('header-search-input');
+        const headerSearchForm = document.getElementById('header-search-form');
+        const categorySearch = document.getElementById('category-search');
+        const groupedCategories = document.getElementById('grouped-categories');
+        const individualTags = document.getElementById('individual-tags');
+        
+        // Header search form submission - preserve all current filters
+        if (headerSearchForm) {
+            headerSearchForm.addEventListener('submit', function(e) {
+                // Form will naturally preserve all hidden inputs for tags, districts, and groups
+            });
+        }
+        
+        // Category search input in sidebar - filter tags in real-time
+        if (categorySearch) {
+            categorySearch.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase().trim();
+                
+                if (searchTerm.length > 0) {
+                    // Switch to individual tags view
+                    groupedCategories.classList.add('hidden');
+                    individualTags.classList.remove('hidden');
+                    
+                    // Filter individual tags
+                    const tagForms = individualTags.querySelectorAll('.sidebar-tag-form');
+                    tagForms.forEach(form => {
+                        const tagName = form.querySelector('.sidebar-tag').textContent.toLowerCase();
+                        if (tagName.includes(searchTerm)) {
+                            form.style.display = 'inline-block';
+                        } else {
+                            form.style.display = 'none';
+                        }
+                    });
+                } else {
+                    // Switch back to grouped view when search is cleared
+                    groupedCategories.classList.remove('hidden');
+                    individualTags.classList.add('hidden');
+                }
+            });
+            
+            // Also handle Enter key in category search to perform header search
+            categorySearch.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const searchTerm = categorySearch.value.trim();
+                    if (searchTerm) {
+                        // Update header search and submit
+                        if (headerSearchInput) {
+                            headerSearchInput.value = searchTerm;
+                        }
+                        headerSearchForm.submit();
+                    }
+                }
+            });
+        }
+        
+        // District search functionality
+        const districtSearch = document.getElementById('district-search');
+        if (districtSearch) {
+            districtSearch.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const districtOptions = document.querySelectorAll('#district-filters .filter-option');
+                
+                districtOptions.forEach(option => {
+                    const districtName = option.querySelector('label').textContent.toLowerCase();
+                    if (districtName.includes(searchTerm)) {
+                        option.style.display = 'flex';
+                    } else {
+                        option.style.display = 'none';
+                    }
+                });
+            });
+        }
+    }
+
+    // Group toggle function
+    function toggleGroup(groupName) {
+        const url = new URL(window.location.href);
+        const currentGroup = url.searchParams.get('group');
+        
+        // If clicking the same group that's already selected, unselect it
+        if (currentGroup === groupName) {
+            url.searchParams.delete('group');
+        } else {
+            // Select the new group
+            url.searchParams.set('group', groupName);
+            // Clear individual tags when selecting a group
+            url.searchParams.delete('tag');
+        }
+        
+        // Preserve search term if exists
+        const searchTerm = document.getElementById('header-search-input')?.value;
+        if (searchTerm) {
+            url.searchParams.set('q', searchTerm);
+        }
+        
+        window.location.href = url.toString();
+    }
+
+    // Dropdown toggle function
+    function toggleDropdown(groupName) {
+        const dropdown = document.getElementById('dropdown-' + groupName);
+        const allDropdowns = document.querySelectorAll('.group-dropdown');
+        
+        // Close all other dropdowns
+        allDropdowns.forEach(d => {
+            if (d.id !== 'dropdown-' + groupName) {
+                d.classList.remove('show');
+            }
+        });
+        
+        // Toggle current dropdown
+        dropdown.classList.toggle('show');
+        
+        // Update aria-expanded
+        const toggleBtn = document.querySelector('.group-dropdown-toggle[data-group="' + groupName + '"]');
+        if (toggleBtn) {
+            const isExpanded = dropdown.classList.contains('show');
+            toggleBtn.setAttribute('aria-expanded', isExpanded.toString());
+        }
+    }
+
+    // Member tag selection
+    function selectMemberTag(tagName) {
+        const url = new URL(window.location.href);
+        
+        // Clear group selection when selecting individual tag
+        url.searchParams.delete('group');
+        
+        // Add the selected tag
+        url.searchParams.delete('tag');
+        url.searchParams.append('tag', tagName);
+        
+        // Preserve search term if exists
+        const searchTerm = document.getElementById('header-search-input')?.value;
+        if (searchTerm) {
+            url.searchParams.set('q', searchTerm);
+        }
+        
+        window.location.href = url.toString();
+    }
+
+    // District toggle function
+    function toggleDistrict(districtName) {
+        const url = new URL(window.location.href);
+        const currentDistricts = url.searchParams.getAll('district');
+        
+        if (currentDistricts.includes(districtName)) {
+            // Remove district
+            url.searchParams.delete('district');
+            currentDistricts.filter(d => d !== districtName).forEach(d => url.searchParams.append('district', d));
+        } else {
+            // Add district
+            url.searchParams.append('district', districtName);
+        }
+        
+        // Preserve search term if exists
+        const searchTerm = document.getElementById('header-search-input')?.value;
+        if (searchTerm) {
+            url.searchParams.set('q', searchTerm);
+        }
+        
+        window.location.href = url.toString();
+    }
+
+    // Enhanced filter functionality
+    function initEnhancedFilters() {
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.group-container')) {
+                document.querySelectorAll('.group-dropdown').forEach(dropdown => {
+                    dropdown.classList.remove('show');
+                });
+                document.querySelectorAll('.group-dropdown-toggle').forEach(toggle => {
+                    toggle.setAttribute('aria-expanded', 'false');
+                });
+            }
+        });
+
+        // Toggle filter sections
+        const categoryHeader = document.getElementById('category-header');
+        const districtHeader = document.getElementById('district-header');
+        
+        if (categoryHeader) {
+            categoryHeader.addEventListener('click', function() {
+                categoryHeader.parentElement.classList.toggle('collapsed');
+            });
+        }
+        
+        if (districtHeader) {
+            districtHeader.addEventListener('click', function() {
+                districtHeader.parentElement.classList.toggle('collapsed');
+            });
+        }
+    }
+
+    function removeFilter(type, value) {
+        const url = new URL(window.location.href);
+        
+        if (type === 'district') {
+            const districts = url.searchParams.getAll('district').filter(d => d !== value);
+            url.searchParams.delete('district');
+            districts.forEach(d => url.searchParams.append('district', d));
+        } else if (type === 'group') {
+            url.searchParams.delete('group');
+        } else if (type === 'tag') {
+            const tags = url.searchParams.getAll('tag').filter(t => t !== value);
+            url.searchParams.delete('tag');
+            tags.forEach(t => url.searchParams.append('tag', t));
+        }
+        
+        // Preserve search term
+        const searchTerm = document.getElementById('header-search-input')?.value;
+        if (searchTerm) {
+            url.searchParams.set('q', searchTerm);
+        }
+        
+        window.location.href = url.toString();
+    }
     </script>
     @RenderSection("Scripts", required: false)
 </body>

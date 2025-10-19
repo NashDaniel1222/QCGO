@@ -188,5 +188,68 @@ namespace QCGO.Services
                 return new List<string>();
             }
         }
+
+        // Return a dictionary of tag -> count across the collection
+        public Dictionary<string, int> GetTagCounts()
+        {
+            if (!_connected || _spots == null) return new Dictionary<string, int>();
+
+            try
+            {
+                var pipeline = new[]
+                {
+                    new BsonDocument("$unwind", "$tags"),
+                    new BsonDocument("$group", new BsonDocument
+                    {
+                        { "_id", "$tags" },
+                        { "count", new BsonDocument("$sum", 1) }
+                    }),
+                    new BsonDocument("$sort", new BsonDocument("_id", 1))
+                };
+
+                var result = _spots.Aggregate<BsonDocument>(pipeline).ToList();
+                return result.ToDictionary(doc => doc["_id"].AsString, doc => doc["count"].ToInt32());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while aggregating tag counts in MongoDB.");
+                return new Dictionary<string, int>();
+            }
+        }
+
+        // Return a dictionary of district -> count across the collection
+        public Dictionary<string, int> GetDistrictCounts()
+        {
+            if (!_connected || _spots == null) return new Dictionary<string, int>();
+
+            try
+            {
+                var pipeline = new[]
+                {
+                    new BsonDocument("$group", new BsonDocument
+                    {
+                        { "_id", "$district" },
+                        { "count", new BsonDocument("$sum", 1) }
+                    }),
+                    new BsonDocument("$sort", new BsonDocument("_id", 1))
+                };
+
+                var result = _spots.Aggregate<BsonDocument>(pipeline).ToList();
+                // Filter out null/empty district keys
+                return result.Where(d => d.Contains("_id") && d["_id"].IsString && !string.IsNullOrWhiteSpace(d["_id"].AsString))
+                             .ToDictionary(doc => doc["_id"].AsString, doc => doc["count"].ToInt32());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while aggregating district counts in MongoDB.");
+                return new Dictionary<string, int>();
+            }
+        }
+
+        public List<string> GetAllDistricts()
+        {
+            var dict = GetDistrictCounts();
+            return dict.Keys.OrderBy(k => k).ToList();
+        }
     }
 }
