@@ -69,7 +69,7 @@ namespace QCGO.Controllers
         public IActionResult Logout()
         {
             HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("LandingPage", "Home");
         }
 
         [HttpPost]

@@ -87,6 +87,114 @@
         .nav-link:hover {
             color: var(--qc-secondary) !important;
         }
+        
+        /* Account Management Styles */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .account-pill {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .account-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .account-icon:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .account-popover {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            width: 220px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            padding: 16px;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+        
+        .account-pill:hover .account-popover {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .account-username {
+            font-weight: 600;
+            color: var(--qc-primary);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .account-popover .btn {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 6px;
+            color: var(--qc-primary);
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+        }
+        
+        .account-popover .btn:hover {
+            background-color: #f1f5f9;
+        }
+        
+        .logout-btn {
+            color: #dc2626 !important;
+        }
+        
+        .logout-btn:hover {
+            background-color: #fef2f2 !important;
+        }
+        
+        .header-login {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            background-color: var(--qc-secondary);
+            color: white;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .header-login:hover {
+            background-color: var(--qc-accent);
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -95,10 +203,47 @@
         <div class="container">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="fs-3 fw-bold">QCGO</div>
-                <nav class="d-flex gap-4">
+                <nav class="d-flex gap-4 align-items-center">
                     <a href="/Home/Index" class="nav-link text-[#cfe9ff] fw-semibold">Spots</a>
                     <a href="/Home/QCMap" class="nav-link text-[#cfe9ff] fw-semibold">QC Map</a>
-                    <a href="/Account/Login" class="nav-link text-[#cfe9ff] fw-semibold">Login</a>
+                    
+                    <!-- Account Management Section -->
+                    <div class="header-actions">
+                        @if (User?.Identity?.IsAuthenticated == true)
+                        {
+                            var username = User.Identity.Name ?? "";
+                            <div class="account-pill" title="@username">
+                                <button class="account-icon" aria-label="Account menu" aria-expanded="false" aria-haspopup="true">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="12" cy="7" r="4"/>
+                                    </svg>
+                                </button>
+                                <div class="account-popover" role="menu" aria-hidden="true">
+                                    <div class="account-username">@username</div>
+                                    <div style="display:flex;flex-direction:column;gap:4px;">
+                                        <a class="btn" href="@Url.Action("Profile","Account")" role="menuitem">
+                                            <i class="fas fa-user" style="margin-right: 8px;"></i>
+                                            Profile
+                                        </a>
+                                        <form method="post" asp-controller="Account" asp-action="Logout" role="none" style="margin: 0;">
+                                            <button type="submit" class="btn logout-btn" role="menuitem">
+                                                <i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i>
+                                                Logout
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <a class="header-login" href="@Url.Action("Login","Account")">
+                                <i class="fas fa-sign-in-alt" style="margin-right: 8px;"></i>
+                                Login
+                            </a>
+                        }
+                    </div>
                 </nav>
             </div>
         </div>

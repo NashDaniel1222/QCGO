@@ -1,20 +1,153 @@
+<style>
+    /* Enhanced styling without removing any functionality */
+    .qc-map-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+    
+    .qc-map-header {
+        margin-bottom: 24px;
+    }
+    
+    .qc-map-title {
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 12px;
+    }
+    
+    .qc-map-description {
+        font-size: 1.1rem;
+        color: #64748b;
+        line-height: 1.6;
+        max-width: 800px;
+    }
+    
+    .qc-map-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+    
+    .marker-badge {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: #fff;
+        padding: 8px 16px;
+        border-radius: 999px;
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .marker-badge::before {
+        content: "";
+        display: block;
+        width: 10px;
+        height: 10px;
+        background-color: white;
+        border-radius: 50%;
+    }
+    
+    .qc-map {
+        height: 700px;
+        border-radius: 12px;
+        margin-top: 6px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .map-view-btn {
+        display: inline-block;
+        padding: 8px 16px;
+        background: #2563eb;
+        color: #fff;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .map-view-btn:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Custom marker styling */
+    .custom-marker {
+        background: #2563eb;
+        border: 3px solid white;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Responsive adjustments */
+    @@media (max-width: 768px) {
+        .qc-map {
+            height: 500px;
+        }
+        
+        .qc-map-title {
+            font-size: 1.75rem;
+        }
+    }
+    
+    @@media (max-width: 480px) {
+        .qc-map {
+            height: 400px;
+        }
+    }
+</style>
+
+<style>
+    /* Ensure popup buttons/links are readable inside Leaflet popups which may have light backgrounds */
+    .leaflet-popup-content-wrapper .map-view-btn,
+    .leaflet-popup-content-wrapper .map-view-btn:link,
+    .leaflet-popup-content-wrapper .map-view-btn:visited,
+    .leaflet-popup-content-wrapper .map-view-btn:hover,
+    .leaflet-popup-content-wrapper .map-view-btn:active {
+        color: #ffffff !important; /* force white text for readability */
+        background-color: #2563eb !important;
+        border-color: transparent !important;
+        box-shadow: none !important;
+    }
+
+    /* If the popup content wrapper uses a dark background, invert the button slightly for contrast */
+    .leaflet-popup-content-wrapper.dark-theme .map-view-btn {
+        background-color: rgba(255,255,255,0.12) !important;
+        color: #fff !important;
+    }
+</style>
+
 @model IEnumerable<QCGO.Models.Spot>
 
 @{
     ViewData["Title"] = "QC Map";
 }
 
-<h1>Quezon City Map</h1>
+<div class="qc-map-container">
+    <div class="qc-map-header">
+        <h1 class="qc-map-title">Quezon City Map</h1>
+        <p class="qc-map-description">
+            This view shows the map of spots. Use the sidebar filters to restrict which markers are displayed.
+        </p>
+    </div>
 
-<p>
-    This view shows the map of spots. Use the sidebar filters to restrict which markers are displayed.
-</p>
-
-<div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-    <div id="markerBadge" style="background:#0d6efd; color:#fff; padding:6px 10px; border-radius:999px; font-weight:600;">Markers: 0</div>
-    <div style="flex:1"></div>
+    <div class="qc-map-controls">
+        <div id="markerBadge" class="marker-badge">Markers: 0</div>
+        <div style="flex:1"></div>
+    </div>
+    
+    <div id="map" class="qc-map"></div>
 </div>
-<div id="map" style="height: 700px; border-radius: 8px; margin-top: 6px;"></div>
 
 <!-- Leaflet CDN -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -76,13 +209,22 @@
 
             if (typeof lat === 'number' && typeof lng === 'number' && isFinite(lat) && isFinite(lng)) {
                 if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
-                    var marker = L.marker([lat, lng]).addTo(map);
+                    // Create a custom marker with improved styling
+                    var customIcon = L.divIcon({
+                        className: 'custom-marker',
+                        html: '<div style="background-color: #2563eb; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>',
+                        iconSize: [20, 20],
+                        iconAnchor: [10, 10]
+                    });
+                    
+                    var marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
+                    
                     // Build popup HTML with a "View" button linking to the Details page for this spot
                     var detailHref = detailsBase + '?id=' + encodeURIComponent(s.id || s._id || '');
-                    var popupHtml = '<div style="min-width:160px">'
-                        + '<div style="font-weight:600; margin-bottom:6px;">' + (s.name || '') + '</div>'
-                        + '<div style="margin-bottom:8px;">' + (s.district || '') + '</div>'
-                        + '<a class="map-view-btn" href="' + detailHref + '" style="display:inline-block;padding:6px 10px;background:#2563eb;color:#fff;border-radius:6px;text-decoration:none;">View</a>'
+                    var popupHtml = '<div style="min-width:180px; padding: 8px 0;">'
+                        + '<div style="font-weight:600; margin-bottom:6px; font-size: 1.1rem;">' + (s.name || '') + '</div>'
+                        + '<div style="margin-bottom:12px; color: #64748b;">' + (s.district || '') + '</div>'
+                        + '<a class="map-view-btn" href="' + detailHref + '">View Details</a>'
                         + '</div>';
 
                     marker.bindPopup(popupHtml);

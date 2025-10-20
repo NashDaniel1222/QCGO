@@ -250,6 +250,35 @@ html,body{height:100%;margin:0;font-family:Segoe UI, Roboto, "Helvetica Neue", A
     position:relative;
     border-right:1px solid #e5e7eb22;
 }
+
+/* On wider viewports, make the sidebar fixed so it stays visible while scrolling. Adjust main area margin to avoid overlap. */
+@media (min-width: 1024px) {
+    .sidebar {
+        position: fixed;
+        left: 32px; /* match header left margin */
+        top: 28px; /* below the floating header */
+        width: var(--sidebar-width);
+        height: calc(100vh - 56px);
+        z-index: 6;
+        align-items: stretch;
+        padding-top: 12px;
+    }
+
+    /* When collapsed, keep the collapsed width but still fixed */
+    .sidebar.collapsed {
+        width: var(--sidebar-collapsed-width);
+    }
+
+    /* Push the main area to the right so it doesn't sit under the fixed sidebar */
+    .sidebar + .main-area {
+        margin-left: calc(var(--sidebar-width) + 48px);
+    }
+
+    /* If the sidebar is collapsed, reduce the main area's left margin */
+    .sidebar.collapsed + .main-area {
+        margin-left: calc(var(--sidebar-collapsed-width) + 48px);
+    }
+}
 .sidebar .sidebar-content {
     display:none;
     opacity:0;

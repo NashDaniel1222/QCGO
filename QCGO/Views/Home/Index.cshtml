@@ -5,7 +5,7 @@
     ViewData["Title"] = "QCGO";
 }
 
-<h1>Spots</h1>
+<h1 class="page-title">Spots</h1>
 
 @{
     var q = ViewData["SearchQuery"] as string;
@@ -13,60 +13,310 @@
     var activeDistrict = ViewData["district"] as string;
     if (!string.IsNullOrEmpty(q) || !string.IsNullOrEmpty(activeTag) || !string.IsNullOrEmpty(activeDistrict))
     {
-        <p>
-            Showing @Model?.Count() result(s)
-            @if (!string.IsNullOrEmpty(q))
-            {
-                <text> for "@q"</text>
-            }
-            @if (!string.IsNullOrEmpty(activeTag))
-            {
-                <text> | Tag: @activeTag</text>
-            }
-            @if (!string.IsNullOrEmpty(activeDistrict))
-            {
-                <text> | District: @activeDistrict</text>
-            }
-        </p>
+        <div class="search-results-header">
+            <p class="results-count">
+                Showing @Model?.Count() result(s)
+                @if (!string.IsNullOrEmpty(q))
+                {
+                    <span class="search-query">for "@q"</span>
+                }
+                @if (!string.IsNullOrEmpty(activeTag))
+                {
+                    <span class="filter-tag">Tag: @activeTag</span>
+                }
+                @if (!string.IsNullOrEmpty(activeDistrict))
+                {
+                    <span class="filter-district">District: @activeDistrict</span>
+                }
+            </p>
+        </div>
     }
 }
 
 @if (Model != null && Model.Any())
 {
     <div class="spots-grid">
-    @foreach (var spot in Model)
-    {
-        var tagList = spot.Tags != null ? string.Join(",", spot.Tags) : "";
-        // Preserve current filters when navigating to the details page so the sidebar remains consistent
-        // Build a details URL that preserves the existing query parameters (supports multiple tag/district values)
-        var baseDetailUrl = Url.Action("Details", "Home", new { id = spot.Id });
-    var qp = new List<KeyValuePair<string, string?>>();
-    if (!string.IsNullOrEmpty(Context.Request.Query["q"])) qp.Add(new KeyValuePair<string, string?>("q", Context.Request.Query["q"].ToString()));
-    foreach (var t in Context.Request.Query["tag"].ToArray()) qp.Add(new KeyValuePair<string, string?>("tag", t));
-    foreach (var d in Context.Request.Query["district"].ToArray()) qp.Add(new KeyValuePair<string, string?>("district", d));
-    var detailUrl = qp.Count > 0 ? QueryHelpers.AddQueryString(baseDetailUrl ?? "/", qp) : baseDetailUrl;
+        @foreach (var spot in Model)
+        {
+            var tagList = spot.Tags != null ? string.Join(",", spot.Tags) : "";
+            // Preserve current filters when navigating to the details page so the sidebar remains consistent
+            // Build a details URL that preserves the existing query parameters (supports multiple tag/district values)
+            var baseDetailUrl = Url.Action("Details", "Home", new { id = spot.Id });
+            var qp = new List<KeyValuePair<string, string?>>();
+            if (!string.IsNullOrEmpty(Context.Request.Query["q"])) qp.Add(new KeyValuePair<string, string?>("q", Context.Request.Query["q"].ToString()));
+            foreach (var t in Context.Request.Query["tag"].ToArray()) qp.Add(new KeyValuePair<string, string?>("tag", t));
+            foreach (var d in Context.Request.Query["district"].ToArray()) qp.Add(new KeyValuePair<string, string?>("district", d));
+            var detailUrl = qp.Count > 0 ? QueryHelpers.AddQueryString(baseDetailUrl ?? "/", qp) : baseDetailUrl;
 
-        <a class='spot-card-link' href='@detailUrl'>
+            <a class="spot-card-link" href="@detailUrl">
                 <div class="spot-card" data-tags="@tagList" data-district="@spot.District">
-                    <div class="spot-thumb" aria-hidden="true">
+                    <div class="spot-thumb">
                         @if (!string.IsNullOrEmpty(spot.ImageUrl))
                         {
                             var encoded = System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(spot.ImageUrl));
-                            <img src="@Url.Action("Fetch", "Image", new { b64 = encoded })" alt="@spot.Name" />
+                            <img src="@Url.Action("Fetch", "Image", new { b64 = encoded })" alt="@spot.Name" loading="lazy" />
+                        }
+                        else
+                        {
+                            <div class="spot-thumb-placeholder">
+                                <svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                                </svg>
+                            </div>
                         }
                     </div>
                     <div class="spot-info">
-                        <div class="spot-name">@spot.Name</div>
-                        <div class="spot-district">District: @spot.District</div>
+                        <h3 class="spot-name">@spot.Name</h3>
+                        <div class="spot-meta">
+                            <span class="spot-district">@spot.District</span>
+                            @if (spot.Tags != null && spot.Tags.Any())
+                            {
+                                <div class="spot-tags">
+                                    @foreach (var tag in spot.Tags.Take(3))
+                                    {
+                                        <span class="spot-tag">@tag</span>
+                                    }
+                                    @if (spot.Tags.Count > 3)
+                                    {
+                                        <span class="spot-tag-more">+@(spot.Tags.Count - 3)</span>
+                                    }
+                                </div>
+                            }
+                        </div>
                     </div>
                 </div>
             </a>
         }
     </div>
-
-    
 }
 else
 {
-    <p>No spots to display.</p>
+    <div class="no-results">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+        <h2>No spots found</h2>
+        <p>Try adjusting your search or filters to find more spots.</p>
+    </div>
 }
+
+<style>
+    .page-title {
+        color: #2c3e50;
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+
+    .search-results-header {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border-left: 4px solid #3498db;
+    }
+
+    .results-count {
+        margin: 0;
+        font-size: 1.1rem;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .search-query, .filter-tag, .filter-district {
+        background: #3498db;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .filter-tag {
+        background: #e74c3c;
+    }
+
+    .filter-district {
+        background: #27ae60;
+    }
+
+    .spots-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+        padding: 1rem 0;
+    }
+
+    .spot-card-link {
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .spot-card-link:hover {
+        transform: translateY(-4px);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .spot-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        border: 1px solid #e9ecef;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .spot-card-link:hover .spot-card {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .spot-thumb {
+        height: 200px;
+        overflow: hidden;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .spot-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .spot-card-link:hover .spot-thumb img {
+        transform: scale(1.05);
+    }
+
+    .spot-thumb-placeholder {
+        color: #dee2e6;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .spot-info {
+        padding: 1.5rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .spot-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+        line-height: 1.4;
+    }
+
+    .spot-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .spot-district {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 500;
+        padding: 0.25rem 0;
+    }
+
+    .spot-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+    }
+
+    .spot-tag {
+        background: #e8f4fd;
+        color: #3498db;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border: 1px solid #d6eaf8;
+    }
+
+    .spot-tag-more {
+        background: #f8f9fa;
+        color: #6c757d;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #6c757d;
+    }
+
+    .no-results svg {
+        color: #dee2e6;
+        margin-bottom: 1.5rem;
+    }
+
+    .no-results h2 {
+        color: #495057;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+
+    .no-results p {
+        font-size: 1.1rem;
+        margin: 0;
+    }
+
+    /* Responsive design */
+    @@media (max-width: 768px) {
+        .spots-grid {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+        }
+        
+        .search-results-header {
+            padding: 1rem;
+        }
+        
+        .results-count {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.375rem;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .spots-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .spot-thumb {
+            height: 160px;
+        }
+        
+        .spot-info {
+            padding: 1.25rem;
+        }
+    }
+</style>
