@@ -40,11 +40,11 @@
         // Preserve current filters when navigating to the details page so the sidebar remains consistent
         // Build a details URL that preserves the existing query parameters (supports multiple tag/district values)
         var baseDetailUrl = Url.Action("Details", "Home", new { id = spot.Id });
-        var qp = new List<KeyValuePair<string, string>>();
-        if (!string.IsNullOrEmpty(Context.Request.Query["q"])) qp.Add(new KeyValuePair<string, string>("q", Context.Request.Query["q"].ToString()));
-        foreach (var t in Context.Request.Query["tag"].ToArray()) qp.Add(new KeyValuePair<string, string>("tag", t));
-        foreach (var d in Context.Request.Query["district"].ToArray()) qp.Add(new KeyValuePair<string, string>("district", d));
-        var detailUrl = qp.Count > 0 ? QueryHelpers.AddQueryString(baseDetailUrl ?? "/", qp) : baseDetailUrl;
+    var qp = new List<KeyValuePair<string, string?>>();
+    if (!string.IsNullOrEmpty(Context.Request.Query["q"])) qp.Add(new KeyValuePair<string, string?>("q", Context.Request.Query["q"].ToString()));
+    foreach (var t in Context.Request.Query["tag"].ToArray()) qp.Add(new KeyValuePair<string, string?>("tag", t));
+    foreach (var d in Context.Request.Query["district"].ToArray()) qp.Add(new KeyValuePair<string, string?>("district", d));
+    var detailUrl = qp.Count > 0 ? QueryHelpers.AddQueryString(baseDetailUrl ?? "/", qp) : baseDetailUrl;
 
         <a class='spot-card-link' href='@detailUrl'>
                 <div class="spot-card" data-tags="@tagList" data-district="@spot.District">

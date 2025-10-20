@@ -379,11 +379,12 @@
                             </h3>
                             <i class="fas fa-chevron-down toggle-icon"></i>
                         </div>
-                        <input type="text" class="filter-search" id="category-search" placeholder="Search categories..." value="@currentQ">
-                        
-                        <!-- Grouped Categories View (shown when not searching) -->
-                        <div id="grouped-categories" class="@(isSearchMode ? "hidden" : "")">
-                            <div class="sidebar-tags" style="margin-top:8px">
+                        <div class="filter-options" id="category-options">
+                            <input type="text" class="filter-search" id="category-search" placeholder="Search categories..." value="@currentQ">
+                            
+                            <!-- Grouped Categories View (shown when not searching) -->
+                            <div id="grouped-categories" class="@(isSearchMode ? "hidden" : "")">
+                                <div class="sidebar-tags" style="margin-top:8px">
                                 @if (grouped != null) 
                                 {
                                     foreach (var g in grouped)
@@ -405,8 +406,7 @@
                                                     class="sidebar-tag group-button @(isGroupActive ? "active" : "")" 
                                                     data-group="@name"
                                                     onclick="toggleGroup('@name')">
-                                                @name 
-                                                <span class="filter-count" style="margin-left:8px;">@count</span>
+                                                @name
                                             </button>
 
                                             @* Dropdown toggle *@
@@ -431,8 +431,7 @@
                                                                     class="sidebar-tag member-tag" 
                                                                     data-tag="@member"
                                                                     onclick="selectMemberTag('@member')">
-                                                                @member 
-                                                                <span class="filter-count">@memberCount</span>
+                                                                @member
                                                             </button>
                                                         }
                                                     </div>
@@ -442,10 +441,10 @@
                                     }
                                 }
                             </div>
-                        </div>
-                        
-                        <!-- Individual Tags View (shown when searching) -->
-                        <div id="individual-tags" class="search-mode-tags @(!isSearchMode ? "hidden" : "")" style="margin-top:8px">
+                            </div>
+                            
+                            <!-- Individual Tags View (shown when searching) -->
+                            <div id="individual-tags" class="search-mode-tags @(!isSearchMode ? "hidden" : "")" style="margin-top:8px">
                             @foreach (var tagName in tags)
                             {
                                 var isTagActive = currentTags.Contains(tagName);
@@ -469,13 +468,10 @@
                                     }
                                     <button type="submit" class="sidebar-tag @(isTagActive ? "active" : "")">
                                         @tagName
-                                        @if (tagCounts.ContainsKey(tagName))
-                                        {
-                                            <span class="filter-count" style="margin-left:8px;">@tagCounts[tagName]</span>
-                                        }
                                     </button>
                                 </form>
                             }
+                            </div>
                         </div>
                     </div>
 
@@ -499,7 +495,6 @@
                                 <div class="filter-option">
                                     <input type="checkbox" id="district-@district" value="@district" @(isDistrictActive ? "checked" : "") onchange="toggleDistrict('@district')">
                                     <label for="district-@district" style="color:#111;">@district</label>
-                                    <span class="filter-count">@(districtCounts.ContainsKey(district) ? districtCounts[district] : 0)</span>
                                 </div>
                             }
                         </div>
@@ -549,22 +544,7 @@
                     </a>
                 </nav>
                 <div class="header-right">
-                    <form class="header-search" role="search" method="get" action="@filtersActionUrl" id="header-search-form">
-                        <input type="text" name="q" value="@currentQ" placeholder="Search categories..." aria-label="Search categories" id="header-search-input" />
-                        <!-- Preserve existing filters when searching -->
-                        @foreach (var t in currentTags) {
-                            <input type="hidden" name="tag" value="@t" />
-                        }
-                        @foreach (var d in currentDistricts) {
-                            <input type="hidden" name="district" value="@d" />
-                        }
-                        @if (!string.IsNullOrEmpty(selectedGroup)) {
-                            <input type="hidden" name="group" value="@selectedGroup" />
-                        }
-                        <button type="submit" aria-label="Search">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                        </button>
-                    </form>
+                    
                     <div class="header-actions">
                         @if (User?.Identity?.IsAuthenticated == true)
                         {
@@ -809,19 +789,39 @@
             }
         });
 
-        // Toggle filter sections
+        // Toggle filter sections and update aria-expanded on the toggle icon
         const categoryHeader = document.getElementById('category-header');
         const districtHeader = document.getElementById('district-header');
-        
+
+        function toggleSection(header) {
+            const group = header.parentElement;
+            const icon = header.querySelector('.toggle-icon');
+            const isCollapsed = group.classList.toggle('collapsed');
+
+            // Update icon rotation/aria-expanded
+            if (icon) {
+                icon.setAttribute('aria-hidden', 'false');
+                icon.setAttribute('aria-expanded', (!isCollapsed).toString());
+                if (isCollapsed) {
+                    icon.classList.add('collapsed');
+                } else {
+                    icon.classList.remove('collapsed');
+                }
+            }
+        }
+
         if (categoryHeader) {
             categoryHeader.addEventListener('click', function() {
-                categoryHeader.parentElement.classList.toggle('collapsed');
+                toggleSection(categoryHeader);
+                // Additionally collapse/expand the new category-options container for clarity
+                const opts = document.getElementById('category-options');
+                if (opts) opts.classList.toggle('hidden');
             });
         }
-        
+
         if (districtHeader) {
             districtHeader.addEventListener('click', function() {
-                districtHeader.parentElement.classList.toggle('collapsed');
+                toggleSection(districtHeader);
             });
         }
     }
