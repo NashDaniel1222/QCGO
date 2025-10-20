@@ -1,0 +1,12 @@
+@model QCGO.Models.Account
+
+@{
+    ViewData["Title"] = "Profile";
+}
+
+<h2>Profile</h2>
+<div>
+    <p><strong>Username:</strong> @Model.Username</p>
+    <p><strong>Password:</strong> @Model.Password</p>
+    <p class="text-muted">Note: Passwords are stored and displayed in plaintext in this demo. Use secure hashing in production.</p>
+</div>
