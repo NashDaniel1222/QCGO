@@ -70,5 +70,47 @@ namespace QCGO.Services
                 return false;
             }
         }
+
+        // Bookmark management
+        public bool AddBookmark(string username, string spotId)
+        {
+            if (_accounts == null) return false;
+            try
+            {
+                var filter = Builders<Account>.Filter.Eq(a => a.Username, username);
+                var update = Builders<Account>.Update.AddToSet(a => a.Bookmarks, spotId);
+                var result = _accounts.UpdateOne(filter, update);
+                return result.ModifiedCount > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to add bookmark");
+                return false;
+            }
+        }
+
+        public bool RemoveBookmark(string username, string spotId)
+        {
+            if (_accounts == null) return false;
+            try
+            {
+                var filter = Builders<Account>.Filter.Eq(a => a.Username, username);
+                var update = Builders<Account>.Update.Pull(a => a.Bookmarks, spotId);
+                var result = _accounts.UpdateOne(filter, update);
+                return result.ModifiedCount > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to remove bookmark");
+                return false;
+            }
+        }
+
+        public List<string> GetBookmarks(string username)
+        {
+            var acct = FindByUsername(username);
+            if (acct == null) return new List<string>();
+            return acct.Bookmarks ?? new List<string>();
+        }
     }
 }

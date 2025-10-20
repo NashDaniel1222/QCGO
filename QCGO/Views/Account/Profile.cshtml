@@ -4,9 +4,608 @@
     ViewData["Title"] = "Profile";
 }
 
-<h2>Profile</h2>
-<div>
-    <p><strong>Username:</strong> @Model.Username</p>
-    <p><strong>Password:</strong> @Model.Password</p>
-    <p class="text-muted">Note: Passwords are stored and displayed in plaintext in this demo. Use secure hashing in production.</p>
+<div class="profile-container">
+    <div class="profile-header">
+        <h1>User Profile</h1>
+        <div class="user-info">
+            <div class="info-card">
+                <h3>Account Information</h3>
+                <div class="info-grid">
+                   
+                    <div class="info-item">
+                        <label>Email:</label>
+                        <span>@Model.Username</span> 
+                    </div>
+                
+                    <div class="info-item">
+                        <label>Total Bookmarks:</label>
+                        <span class="bookmark-count">@(ViewBag.BookmarkedSpots?.Count ?? 0)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bookmarks-section">
+        <div class="section-header">
+            <h2>Bookmarked Spots</h2>
+            <div class="bookmarks-stats">
+                <span class="count-badge">@(ViewBag.BookmarkedSpots?.Count ?? 0) spots</span>
+            </div>
+        </div>
+
+        @{
+            var spots = ViewBag.BookmarkedSpots as List<QCGO.Models.Spot> ?? new List<QCGO.Models.Spot>();
+        }
+
+        @if (spots.Any())
+        {
+            <div class="bookmarks-grid">
+                @foreach (var spot in spots)
+                {
+                    <div class="spot-card" data-spot-id="@spot.Id" data-detail-url="@Url.Action("Details","Home", new { id = spot.Id })" tabindex="0" role="link">
+                        <div class="spot-image">
+                            @if (!string.IsNullOrEmpty(spot.ImageUrl))
+                            {
+                                var encoded = System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(spot.ImageUrl));
+                                <img src='@Url.Action("Fetch", "Image", new { b64 = encoded })' alt='@spot.Name' />
+                            }
+                            else
+                            {
+                                <div class="no-image">No Image</div>
+                            }
+                            <button class="remove-bookmark-btn" data-spot-id="@spot.Id" title="Remove bookmark">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="spot-info">
+                            <h3 class="spot-name">
+                                <a href="@Url.Action("Details","Home", new { id = spot.Id })">@spot.Name</a>
+                            </h3>
+                            <div class="spot-meta">
+                                <span class="district">@spot.District</span>
+                                <span class="barangay">@spot.Barangay</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(spot.Description))
+                            {
+                                <p class="spot-description">@(spot.Description.Length > 100 ? spot.Description.Substring(0, 100) + "..." : spot.Description)</p>
+                            }
+                            @if (spot.Tags != null && spot.Tags.Any())
+                            {
+                                <div class="spot-tags">
+                                    @foreach (var tag in spot.Tags.Take(3))
+                                    {
+                                        <span class="tag">@tag</span>
+                                    }
+                                    @if (spot.Tags.Count > 3)
+                                    {
+                                        <span class="tag-more">+@(spot.Tags.Count - 3) more</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-icon">☆</div>
+                <h3>No Bookmarked Spots Yet</h3>
+                <p>Start exploring Quezon City and bookmark your favorite spots!</p>
+                <a href="@Url.Action("Index", "Home")" class="explore-btn">Explore Spots</a>
+            </div>
+        }
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Remove bookmark functionality
+            const removeButtons = document.querySelectorAll('.remove-bookmark-btn');
+            
+            removeButtons.forEach(button => {
+                button.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const spotId = this.getAttribute('data-spot-id');
+                    const spotCard = this.closest('.spot-card');
+                    
+                    await removeBookmark(spotId, spotCard);
+                });
+            });
+
+            async function removeBookmark(spotId, spotCard) {
+                try {
+                    // Show loading state
+                    spotCard.style.opacity = '0.6';
+                    const button = spotCard.querySelector('.remove-bookmark-btn');
+                    button.innerHTML = '<div class="loading-spinner"></div>';
+                    button.disabled = true;
+
+                    // Get anti-forgery token
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                    const response = await fetch('@Url.Action("ToggleBookmark", "Account")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'RequestVerificationToken': token,
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: `spotId=${spotId}`
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        
+                        if (result.success && !result.isBookmarked) {
+                            // Animate removal
+                            spotCard.style.transform = 'translateX(100%)';
+                            spotCard.style.opacity = '0';
+                            
+                            setTimeout(() => {
+                                spotCard.remove();
+                                updateBookmarkStats();
+                                showFeedback('Bookmark removed successfully');
+                            }, 300);
+                        } else {
+                            throw new Error('Failed to remove bookmark');
+                        }
+                    } else {
+                        throw new Error('Network error');
+                    }
+                } catch (error) {
+                    console.error('Error removing bookmark:', error);
+                    showFeedback('Failed to remove bookmark', true);
+                    
+                    // Restore button state
+                    spotCard.style.opacity = '1';
+                    const button = spotCard.querySelector('.remove-bookmark-btn');
+                    button.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
+                    button.disabled = false;
+                }
+            }
+
+            function updateBookmarkStats() {
+                const remainingSpots = document.querySelectorAll('.spot-card').length;
+                const countBadge = document.querySelector('.count-badge');
+                const bookmarkCount = document.querySelector('.bookmark-count');
+                
+                if (countBadge) {
+                    countBadge.textContent = `${remainingSpots} spots`;
+                }
+                if (bookmarkCount) {
+                    bookmarkCount.textContent = remainingSpots;
+                }
+
+                // Show empty state if no spots left
+                if (remainingSpots === 0) {
+                    const bookmarksSection = document.querySelector('.bookmarks-section');
+                    const emptyState = document.querySelector('.empty-state') || createEmptyState();
+                    if (!document.querySelector('.empty-state')) {
+                        bookmarksSection.appendChild(emptyState);
+                    }
+                }
+            }
+
+            function createEmptyState() {
+                const emptyState = document.createElement('div');
+                emptyState.className = 'empty-state';
+                emptyState.innerHTML = `
+                    <div class="empty-icon">☆</div>
+                    <h3>No Bookmarked Spots Yet</h3>
+                    <p>Start exploring Quezon City and bookmark your favorite spots!</p>
+                    <a href="@Url.Action("Index", "Home")" class="explore-btn">Explore Spots</a>
+                `;
+                return emptyState;
+            }
+
+            function showFeedback(message, isError = false) {
+                // Remove existing feedback
+                const existingFeedback = document.querySelector('.feedback-message');
+                if (existingFeedback) {
+                    existingFeedback.remove();
+                }
+
+                // Create feedback element
+                const feedback = document.createElement('div');
+                feedback.className = `feedback-message ${isError ? 'error' : 'success'}`;
+                feedback.textContent = message;
+                
+                document.body.appendChild(feedback);
+
+                // Animate in
+                setTimeout(() => feedback.classList.add('show'), 10);
+
+                // Remove after 3 seconds
+                setTimeout(() => {
+                    feedback.classList.remove('show');
+                    setTimeout(() => {
+                        if (feedback.parentNode) {
+                            feedback.parentNode.removeChild(feedback);
+                        }
+                    }, 300);
+                }, 3000);
+            }
+
+            // Make spot cards clickable (navigate to detail) except when clicking the remove button
+            const spotCards = document.querySelectorAll('.spot-card');
+            spotCards.forEach(card => {
+                card.style.cursor = 'pointer';
+                card.addEventListener('click', function(e) {
+                    if (e.target.closest('.remove-bookmark-btn')) return;
+                    const url = this.getAttribute('data-detail-url');
+                    if (url) window.location.href = url;
+                });
+
+                card.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        if (e.target.closest('.remove-bookmark-btn')) return;
+                        const url = this.getAttribute('data-detail-url');
+                        if (url) window.location.href = url;
+                    }
+                });
+            });
+        });
+    </script>
+
+    <style>
+        .profile-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .profile-header {
+            margin-bottom: 40px;
+        }
+
+        .profile-header h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .user-info {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .info-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid #e1e5e9;
+        }
+
+        .info-card h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .info-item label {
+            font-weight: 600;
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-item span {
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+
+        .bookmark-count {
+            color: #e67e22;
+            font-weight: 700;
+        }
+
+        .bookmarks-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid #e1e5e9;
+            overflow: hidden;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px 30px;
+            border-bottom: 1px solid #e1e5e9;
+            background: #f8f9fa;
+        }
+
+        .section-header h2 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .count-badge {
+            background: #e67e22;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .bookmarks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            padding: 30px;
+        }
+
+        .spot-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e1e5e9;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .spot-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        .spot-image {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .spot-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .no-image {
+            width: 100%;
+            height: 100%;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .remove-bookmark-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #e74c3c;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .remove-bookmark-btn:hover {
+            background: #e74c3c;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .remove-bookmark-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .spot-info {
+            padding: 20px;
+        }
+
+        .spot-name {
+            margin: 0 0 10px 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .spot-name a {
+            color: #2c3e50;
+            text-decoration: none;
+        }
+
+        .spot-name a:hover {
+            color: #3498db;
+        }
+
+        .spot-meta {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 12px;
+        }
+
+        .district, .barangay {
+            background: #ecf0f1;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+
+        .spot-description {
+            color: #5d6d7e;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+        }
+
+        .spot-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tag {
+            background: #3498db;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .tag-more {
+            background: #bdc3c7;
+            color: #7f8c8d;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 30px;
+            color: #7f8c8d;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            color: #bdc3c7;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            color: #7f8c8d;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+
+        .empty-state p {
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+        }
+
+        .explore-btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .explore-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .feedback-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            z-index: 10000;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .feedback-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .feedback-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .feedback-message.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .loading-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @@keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive design */
+        @@media (max-width: 768px) {
+            .profile-container {
+                padding: 15px;
+            }
+
+            .bookmarks-grid {
+                grid-template-columns: 1fr;
+                padding: 20px;
+                gap: 20px;
+            }
+
+            .section-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .spot-meta {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    </style>
+}

@@ -72,7 +72,16 @@ namespace QCGO.Services
 
             try
             {
-                var filter = Builders<Spot>.Filter.Eq(s => s.Id, id);
+                if (string.IsNullOrWhiteSpace(id)) return null;
+
+                // Defensive: sometimes a malformed id with extra characters
+                // (e.g. from bad concatenation in a view) can be passed. Extract
+                // the first 24-hex sequence which corresponds to MongoDB ObjectId.
+                var trimmed = id.Trim();
+                var match = System.Text.RegularExpressions.Regex.Match(trimmed, "[0-9a-fA-F]{24}");
+                var cleaned = match.Success ? match.Value : trimmed;
+
+                var filter = Builders<Spot>.Filter.Eq(s => s.Id, cleaned);
                 return _spots.Find(filter).FirstOrDefault();
             }
             catch (Exception ex)

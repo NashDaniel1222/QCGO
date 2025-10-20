@@ -7,10 +7,12 @@ namespace QCGO.Controllers
     public class HomeController : Controller
     {
         private readonly QCGO.Services.SpotService _spotService;
+        private readonly QCGO.Services.AccountService _accountService;
 
-        public HomeController(QCGO.Services.SpotService spotService)
+        public HomeController(QCGO.Services.SpotService spotService, QCGO.Services.AccountService accountService)
         {
             _spotService = spotService;
+            _accountService = accountService;
         }
 
         // Support multiple tag/district query values (e.g. ?tag=Art&tag=Nature)
@@ -48,6 +50,18 @@ namespace QCGO.Controllers
             if (spot == null) return NotFound();
             // Ensure sidebar data is populated so the layout renders consistently
             PopulateSidebarData(q, tag, district, null);
+            // Determine whether current user has this spot bookmarked
+            var isBookmarked = false;
+            if (User?.Identity?.IsAuthenticated == true)
+            {
+                var username = User?.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? User?.FindFirst("username")?.Value;
+                if (!string.IsNullOrEmpty(username))
+                {
+                    var bookmarks = _accountService.GetBookmarks(username);
+                    isBookmarked = bookmarks.Contains(id);
+                }
+            }
+            ViewBag.IsBookmarked = isBookmarked;
             return View(spot);
         }
 

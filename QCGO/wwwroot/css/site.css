@@ -171,7 +171,8 @@ html,body{height:100%;margin:0;font-family:Segoe UI, Roboto, "Helvetica Neue", A
     z-index: 40;
 }
 
-.account-pill:hover .account-popover,
+/* Show popover when explicitly opened (via JS) or for keyboard accessibility via focus-within */
+.account-pill.open .account-popover,
 .account-pill:focus-within .account-popover {
     display: block;
 }

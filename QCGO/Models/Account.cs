@@ -14,5 +14,8 @@ namespace QCGO.Models
 
         [BsonElement("password")]
         public string Password { get; set; } = string.Empty; // stored plaintext in your screenshot - replace with hash in production
+
+        [BsonElement("bookmarks")]
+        public List<string> Bookmarks { get; set; } = new List<string>();
     }
 }

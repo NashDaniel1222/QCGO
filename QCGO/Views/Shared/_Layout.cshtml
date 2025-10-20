@@ -112,6 +112,181 @@
             margin-bottom: 15px;
         }
 
+        /* Header Styles */
+        .floating-header {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid #e5e7eb;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+            box-sizing: border-box;
+        }
+
+        .header-left {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #111;
+        }
+
+        .header-center {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-nav-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #6b7280;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .header-nav-btn:hover {
+            color: #374151;
+            background: #f9fafb;
+        }
+
+        .header-nav-btn.active {
+            color: #3b82f6;
+            background: #eff6ff;
+            border-color: #dbeafe;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-login {
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background 0.2s ease;
+        }
+
+        .header-login:hover {
+            background: #2563eb;
+        }
+
+        /* Enhanced Account Pill Styles */
+        .account-pill {
+            position: relative;
+            display: inline-block;
+        }
+
+        .account-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .account-icon:hover {
+            background: #f1f5f9;
+            border-color: #d1d5db;
+            transform: scale(1.05);
+        }
+
+        .account-pill.open .account-icon {
+            background: #3b82f6;
+            border-color: #3b82f6;
+        }
+
+        .account-pill.open .account-icon svg {
+            stroke: white;
+        }
+
+        .account-popover {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            padding: 16px;
+            min-width: 200px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px);
+            transition: all 0.2s ease;
+            z-index: 50;
+        }
+
+        .account-pill.open .account-popover {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .account-username {
+            font-weight: 600;
+            color: #111;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.95rem;
+        }
+
+        .account-popover .btn {
+            display: block;
+            width: 100%;
+            padding: 10px 12px;
+            text-align: left;
+            text-decoration: none;
+            color: #374151;
+            border: none;
+            background: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .account-popover .btn:hover {
+            background: #f8fafc;
+            color: #111;
+        }
+
+        .account-popover .logout-btn {
+            color: #dc2626;
+            border-top: 1px solid #f1f5f9;
+            margin-top: 8px;
+            padding-top: 12px;
+        }
+
+        .account-popover .logout-btn:hover {
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
         /* New enhanced filter styles */
         .filter-group {
             margin-bottom: 25px;
@@ -315,6 +490,24 @@
         .hidden {
             display: none !important;
         }
+
+        /* Main area and content styles */
+        .app-shell {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -322,8 +515,8 @@
 <body class="bg-gray-50">
     <div class="app-shell">
         @{
-            // Hide sidebar on district-related pages
-            var hideSidebar = (currentAction == "DistrictDashboard" || currentAction == "DistrictSuggestions");
+            // Hide sidebar on district-related pages and on the account profile page
+            var hideSidebar = (currentAction == "DistrictDashboard" || currentAction == "DistrictSuggestions" || (currentController == "Account" && currentAction == "Profile"));
         }
         @if (!hideSidebar)
         {
@@ -549,15 +742,27 @@
                         @if (User?.Identity?.IsAuthenticated == true)
                         {
                             var username = User.Identity.Name ?? "";
-                                <div class="account-pill" title="@username">
-                                <a class="account-icon" aria-label="Account" href="@Url.Action("Profile","Account")">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                </a>
-                                <div class="account-popover">
+                            <div class="account-pill" title="@username">
+                                <button class="account-icon" aria-label="Account menu" aria-expanded="false" aria-haspopup="true">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="12" cy="7" r="4"/>
+                                    </svg>
+                                </button>
+                                <div class="account-popover" role="menu" aria-hidden="true">
                                     <div class="account-username">@username</div>
-                                    <form method="post" asp-controller="Account" asp-action="Logout">
-                                        <button type="submit" class="btn logout-btn">Logout</button>
-                                    </form>
+                                    <div style="display:flex;flex-direction:column;gap:4px;">
+                                        <a class="btn" href="@Url.Action("Profile","Account")" role="menuitem">
+                                            <i class="fas fa-user" style="margin-right: 8px;"></i>
+                                            Profile
+                                        </a>
+                                        <form method="post" asp-controller="Account" asp-action="Logout" role="none" style="margin: 0;">
+                                            <button type="submit" class="btn logout-btn" role="menuitem">
+                                                <i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i>
+                                                Logout
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         }
@@ -849,6 +1054,52 @@
         
         window.location.href = url.toString();
     }
+    </script>
+    <script>
+    // Enhanced Account popover functionality
+    (function(){
+        document.addEventListener('DOMContentLoaded', function(){
+            const pill = document.querySelector('.account-pill');
+            if (!pill) return;
+            const pop = pill.querySelector('.account-popover');
+            const btn = pill.querySelector('.account-icon');
+
+            function close() {
+                pill.classList.remove('open');
+                if (pop) pop.setAttribute('aria-hidden','true');
+                if (btn) btn.setAttribute('aria-expanded','false');
+            }
+
+            function open() {
+                pill.classList.add('open');
+                if (pop) pop.setAttribute('aria-hidden','false');
+                if (btn) btn.setAttribute('aria-expanded','true');
+            }
+
+            btn.addEventListener('click', function(e){
+                e.preventDefault();
+                e.stopPropagation();
+                if (pill.classList.contains('open')) close(); else open();
+            });
+
+            // Close on outside click
+            document.addEventListener('click', function(e){
+                if (!e.target.closest('.account-pill')) close();
+            });
+
+            // Close on Escape
+            document.addEventListener('keydown', function(e){
+                if (e.key === 'Escape') close();
+            });
+
+            // Close when clicking on menu items (except forms)
+            pop.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A' || (e.target.tagName === 'BUTTON' && !e.target.closest('form'))) {
+                    setTimeout(close, 100);
+                }
+            });
+        });
+    })();
     </script>
     @RenderSection("Scripts", required: false)
 </body>
