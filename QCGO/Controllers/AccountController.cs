@@ -98,5 +98,35 @@ namespace QCGO.Controllers
 
             return RedirectToAction("Login");
         }
+
+        [HttpGet]
+        public IActionResult Profile()
+        {
+            // ensure user is authenticated
+            if (!User?.Identity?.IsAuthenticated ?? true)
+            {
+                return Challenge();
+            }
+
+            // read username from claims
+            var nameClaim = User?.FindFirst(ClaimTypes.Name)?.Value;
+            var userClaim = User?.FindFirst("username")?.Value;
+            var username = nameClaim ?? userClaim;
+            if (string.IsNullOrEmpty(username))
+            {
+                return Challenge();
+            }
+
+            var acct = _accountService.FindByUsername(username);
+            if (acct == null)
+            {
+                // not found — sign out and challenge
+                HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                return Challenge();
+            }
+
+            // pass account to view (shows username and password per request)
+            return View(acct);
+        }
     }
 }
