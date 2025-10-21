@@ -88,6 +88,27 @@ namespace QCGO.Controllers
             return View(spots);
         }
 
+        // Suggest endpoint: return lightweight JSON suggestions for autosuggest in the layout
+        [HttpGet]
+        public IActionResult Suggest(string? q, string[]? tag, string[]? district, int limit = 8)
+        {
+            if (string.IsNullOrWhiteSpace(q)) return Json(new object[0]);
+
+            // Use existing search functionality; SpotService.Search already performs case-insensitive regex matching
+            var results = _spotService.Search(q, tag, district)
+                                      .Where(s => s != null)
+                                      .Select(s => new {
+                                          id = s.Id,
+                                          name = s.Name ?? string.Empty,
+                                          barangay = s.Barangay ?? string.Empty,
+                                          district = s.District ?? string.Empty
+                                      })
+                                      .Take(limit)
+                                      .ToList();
+
+            return Json(results);
+        }
+
         // New action: District dashboard (placeholder view)
         public IActionResult DistrictDashboard()
         {

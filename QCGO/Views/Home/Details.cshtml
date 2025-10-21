@@ -5,7 +5,7 @@
 }
 
 <div class="spot-details">
-    <a href='@Url.Action("Index", "Home")' class="back-link">&larr; Back to Home</a>
+    <button type="button" class="back-link" id="back-to-home">&larr; Back to Home</button>
     
     <div class="spot-header">
         <h1>@Model?.Name</h1>
@@ -146,6 +146,12 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const backBtn = document.getElementById('back-to-home');
+            if (backBtn) {
+                backBtn.addEventListener('click', function() {
+                    window.location.href = '@Url.Action("Index", "Home")';
+                });
+            }
             const bookmarkBtn = document.getElementById('bookmark-btn');
             
             if (bookmarkBtn) {
@@ -291,6 +297,10 @@
             color: #007bff;
             text-decoration: none;
             font-size: 16px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            padding: 0;
         }
 
         .back-link:hover {

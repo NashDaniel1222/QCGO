@@ -167,6 +167,41 @@
             gap: 16px;
         }
 
+        /* Header search (visible only on Spots / QCMap pages) */
+        .header-search-form {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 12px;
+        }
+
+        .header-search-input {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            width: 220px;
+            transition: box-shadow 0.12s ease;
+            font-size: 0.95rem;
+        }
+
+        .header-search-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+            border-color: #3b82f6;
+        }
+
+        .header-search-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            background: #f8fafc;
+            cursor: pointer;
+        }
+
         .header-actions {
             display: flex;
             align-items: center;
@@ -737,7 +772,30 @@
                     </a>
                 </nav>
                 <div class="header-right">
-                    
+                    @* Show a simple spots search only on the Spots (Index) and QCMap pages *@
+                    @if (currentController == "Home" && (currentAction == "Index" || currentAction == "QCMap"))
+                    {
+                        <form method="get" action="@Url.Action(currentAction, currentController)" class="header-search-form" id="header-search-form" role="search">
+                            @* Preserve existing filters when searching *@
+                            @if (!string.IsNullOrEmpty(currentQ)) { <input type="hidden" name="q" value="@currentQ" /> }
+                            @foreach (var t in currentTags) { <input type="hidden" name="tag" value="@t" /> }
+                            @foreach (var d in currentDistricts) { <input type="hidden" name="district" value="@d" /> }
+                            @if (!string.IsNullOrEmpty(selectedGroup)) { <input type="hidden" name="group" value="@selectedGroup" /> }
+
+                            <div style="position:relative;">
+                                <input id="header-search-input" name="q" aria-label="Search spots" class="header-search-input" type="search" placeholder="Search spots..." value="@currentQ" autocomplete="off" />
+                                <div id="header-suggestions" class="suggestions hidden" role="listbox" aria-label="Search suggestions" style="position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 6px 18px rgba(16,24,40,0.06);z-index:60;max-height:320px;overflow:auto;"></div>
+                            </div>
+
+                            <button type="submit" class="header-search-btn" aria-label="Search">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="11" cy="11" r="7"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                            </button>
+                        </form>
+                    }
+
                     <div class="header-actions">
                         @if (User?.Identity?.IsAuthenticated == true)
                         {
@@ -817,6 +875,7 @@
     function initSearchFunctionality() {
         const headerSearchInput = document.getElementById('header-search-input');
         const headerSearchForm = document.getElementById('header-search-form');
+        const suggestionsBox = document.getElementById('header-suggestions');
         const categorySearch = document.getElementById('category-search');
         const groupedCategories = document.getElementById('grouped-categories');
         const individualTags = document.getElementById('individual-tags');
@@ -825,6 +884,114 @@
         if (headerSearchForm) {
             headerSearchForm.addEventListener('submit', function(e) {
                 // Form will naturally preserve all hidden inputs for tags, districts, and groups
+            });
+        }
+
+        // Autosuggest implementation
+        if (headerSearchInput && suggestionsBox) {
+            let controller = null;
+            let focusedIndex = -1;
+            const renderSuggestions = (items) => {
+                suggestionsBox.innerHTML = '';
+                if (!items || items.length === 0) {
+                    suggestionsBox.classList.add('hidden');
+                    return;
+                }
+
+                items.forEach((it, idx) => {
+                    const el = document.createElement('div');
+                    el.className = 'suggestion-item';
+                    el.setAttribute('role', 'option');
+                    el.setAttribute('data-id', it.id || '');
+                    el.setAttribute('data-name', it.name || '');
+                    el.style.padding = '10px';
+                    el.style.borderBottom = '1px solid #f1f5f9';
+                    el.style.cursor = 'pointer';
+                    el.innerHTML = `<div style="font-weight:600;color:#111">${escapeHtml(it.name)}</div><div style="font-size:0.85rem;color:#6b7280">${escapeHtml(it.barangay || '')} ${it.district ? '&middot; ' + escapeHtml(it.district) : ''}</div>`;
+                    el.addEventListener('click', function() {
+                        // Navigate to details page for selected spot
+                        const id = el.getAttribute('data-id');
+                        if (id) window.location.href = '/Home/Details?id=' + encodeURIComponent(id) + buildQueryFromCurrentFilters();
+                    });
+                    el.addEventListener('mouseenter', function() {
+                        setFocus(idx);
+                    });
+                    suggestionsBox.appendChild(el);
+                });
+                suggestionsBox.classList.remove('hidden');
+                focusedIndex = -1;
+            };
+
+            const setFocus = (index) => {
+                const items = suggestionsBox.querySelectorAll('.suggestion-item');
+                items.forEach((it, i) => {
+                    it.style.background = i === index ? '#eff6ff' : 'transparent';
+                });
+                focusedIndex = index;
+            };
+
+            const fetchSuggestions = (q) => {
+                if (controller) controller.abort();
+                controller = new AbortController();
+                const params = new URLSearchParams();
+                params.set('q', q);
+                // preserve selected tags/districts/group from current page
+                const tags = Array.from(document.querySelectorAll('input[name="tag"][type="hidden"]')).map(i => i.value);
+                tags.forEach(t => params.append('tag', t));
+                const dists = Array.from(document.querySelectorAll('input[name="district"][type="hidden"]')).map(i => i.value);
+                dists.forEach(d => params.append('district', d));
+
+                fetch('/Home/Suggest?' + params.toString(), { signal: controller.signal })
+                    .then(r => r.json())
+                    .then(data => {
+                        renderSuggestions(data);
+                    })
+                    .catch(err => {
+                        if (err.name === 'AbortError') return;
+                        console.error('Suggestion fetch failed', err);
+                    });
+            };
+
+            // Debounce helper
+            let debounceTimer = null;
+            headerSearchInput.addEventListener('input', function(e) {
+                const val = e.target.value.trim();
+                if (debounceTimer) clearTimeout(debounceTimer);
+                if (!val) {
+                    suggestionsBox.classList.add('hidden');
+                    return;
+                }
+                debounceTimer = setTimeout(() => fetchSuggestions(val), 220);
+            });
+
+            // Keyboard navigation
+            headerSearchInput.addEventListener('keydown', function(e) {
+                const items = suggestionsBox.querySelectorAll('.suggestion-item');
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (items.length === 0) return;
+                    const next = Math.min(focusedIndex + 1, items.length - 1);
+                    setFocus(next);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (items.length === 0) return;
+                    const prev = Math.max(focusedIndex - 1, 0);
+                    setFocus(prev);
+                } else if (e.key === 'Enter') {
+                    if (focusedIndex >= 0 && items[focusedIndex]) {
+                        e.preventDefault();
+                        items[focusedIndex].click();
+                    }
+                } else if (e.key === 'Escape') {
+                    suggestionsBox.classList.add('hidden');
+                }
+            });
+
+            // Close suggestions when clicking outside
+            document.addEventListener('click', function(ev) {
+                if (!ev.target.closest('.header-search-form') && !ev.target.closest('#header-suggestions')) {
+                    suggestionsBox.classList.add('hidden');
+                }
             });
         }
         
@@ -1053,6 +1220,38 @@
         }
         
         window.location.href = url.toString();
+    }
+
+    // Helper: basic HTML escape for suggestion text
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>"'`=/]/g, function(s) {
+            return ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;',
+                '`': '&#x60;',
+                '=': '&#x3D;',
+                '/': '&#x2F;'
+            })[s];
+        });
+    }
+
+    // Helper: preserve current filters when navigating to a Details page
+    function buildQueryFromCurrentFilters() {
+        const params = new URLSearchParams();
+        const tags = Array.from(document.querySelectorAll('input[name="tag"][type="hidden"]')).map(i => i.value);
+        tags.forEach(t => params.append('tag', t));
+        const dists = Array.from(document.querySelectorAll('input[name="district"][type="hidden"]')).map(i => i.value);
+        dists.forEach(d => params.append('district', d));
+        const q = document.getElementById('header-search-input')?.value;
+        if (q) params.set('q', q);
+        const group = document.querySelector('input[name="group"][type="hidden"]')?.value;
+        if (group) params.set('group', group);
+        const s = params.toString();
+        return s ? '&' + s : '';
     }
     </script>
     <script>
