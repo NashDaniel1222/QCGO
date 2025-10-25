@@ -823,24 +823,26 @@
                                 </a>
                                 <div class="account-popover" role="menu" aria-hidden="true">
                                     <div class="account-username">@displayName</div>
-                                    <div style="display:flex;flex-direction:column;gap:4px;">
-                                        <a class="btn" href="@Url.Action("Profile","Account")" role="menuitem">
-                                            <i class="fas fa-user" style="margin-right: 8px;"></i>
-                                            Profile
-                                        </a>
-                                        @if (isAdmin) {
-                                            <a class="btn" href="@Url.Action("Admin","Account")" role="menuitem">
-                                                <i class="fas fa-user-shield" style="margin-right: 8px;"></i>
-                                                Admin
-                                            </a>
-                                        }
-                                        <form method="post" asp-controller="Account" asp-action="Logout" role="none" style="margin: 0;">
-                                            <button type="submit" class="btn logout-btn" role="menuitem">
-                                                <i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i>
-                                                Logout
-                                            </button>
-                                        </form>
-                                    </div>
+                                   <div style="display:flex;flex-direction:column;gap:4px;">
+    @if (!isAdmin) {
+        <a class="btn" href="@Url.Action("Profile","Account")" role="menuitem">
+            <i class="fas fa-user" style="margin-right: 8px;"></i>
+            Profile
+        </a>
+    }
+    @if (isAdmin) {
+        <a class="btn" href="@Url.Action("Admin","Account")" role="menuitem">
+            <i class="fas fa-user-shield" style="margin-right: 8px;"></i>
+            Admin
+        </a>
+    }
+    <form method="post" asp-controller="Account" asp-action="Logout" role="none" style="margin: 0;">
+        <button type="submit" class="btn logout-btn" role="menuitem">
+            <i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i>
+            Logout
+        </button>
+    </form>
+</div>
                                 </div>
                             </div>
                         }
