@@ -76,7 +76,7 @@ namespace QCGO.Controllers
 
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                     return Redirect(returnUrl);
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("LandingPage", "Home");
             }
 
             ModelState.AddModelError(string.Empty, "Invalid username or password.");
