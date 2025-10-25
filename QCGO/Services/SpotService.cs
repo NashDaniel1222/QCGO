@@ -260,5 +260,40 @@ namespace QCGO.Services
             var dict = GetDistrictCounts();
             return dict.Keys.OrderBy(k => k).ToList();
         }
+
+        // Re-introduce AddSpot to allow inserting new spots (used by admin UI)
+        public bool AddSpot(Spot spot)
+        {
+            if (!_connected || _spots == null || spot == null) return false;
+            try
+            {
+                // ensure timestamps
+                spot.CreatedAt = spot.CreatedAt ?? DateTime.UtcNow;
+                _spots.InsertOne(spot);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to insert new spot");
+                return false;
+            }
+        }
+
+        // Update an existing spot by Id. Returns true if modified.
+        public bool UpdateSpot(Spot spot)
+        {
+            if (!_connected || _spots == null || spot == null || string.IsNullOrEmpty(spot.Id)) return false;
+            try
+            {
+                var filter = Builders<Spot>.Filter.Eq(s => s.Id, spot.Id);
+                var result = _spots.ReplaceOne(filter, spot);
+                return result.IsAcknowledged && result.ModifiedCount > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to update spot {Id}", spot.Id);
+                return false;
+            }
+        }
     }
 }

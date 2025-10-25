@@ -55,12 +55,12 @@ namespace QCGO.Services
             return FindByUsername(username) != null;
         }
 
-        public bool CreateAccount(string username, string password)
+        public bool CreateAccount(string username, string password, string displayName = "", string role = "user", DateTime? birthday = null, string gender = "")
         {
             if (_accounts == null) return false;
             try
             {
-                var acct = new Account { Username = username, Password = password };
+                var acct = new Account { Username = username, Password = password, DisplayName = displayName ?? string.Empty, Role = role ?? "user", Birthday = birthday, Gender = gender ?? string.Empty };
                 _accounts.InsertOne(acct);
                 return true;
             }
@@ -111,6 +111,21 @@ namespace QCGO.Services
             var acct = FindByUsername(username);
             if (acct == null) return new List<string>();
             return acct.Bookmarks ?? new List<string>();
+        }
+
+        // Return all accounts (used by admin UI)
+        public List<Account> GetAllAccounts()
+        {
+            if (_accounts == null) return new List<Account>();
+            try
+            {
+                return _accounts.Find(_ => true).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to retrieve accounts");
+                return new List<Account>();
+            }
         }
     }
 }

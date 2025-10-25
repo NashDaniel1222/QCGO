@@ -157,6 +157,23 @@
                                 <input id="regEmail" name="Email" type="email" class="form-control" />
                             </div>
                             <div class="form-group">
+                                <label for="regUsername">Username</label>
+                                <input id="regUsername" name="Username" type="text" class="form-control" />
+                            </div>
+                            <div class="form-group">
+                                <label for="regBirthday">Birthday</label>
+                                <input id="regBirthday" name="Birthday" type="date" class="form-control" />
+                            </div>
+                            <div class="form-group">
+                                <label for="regGender">Gender</label>
+                                <select id="regGender" name="Gender" class="form-control">
+                                    <option value="">Prefer not to say</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
                                 <label for="regPassword">Password</label>
                                 <input id="regPassword" name="Password" type="password" class="form-control" />
                             </div>
@@ -190,12 +207,7 @@
                             <span asp-validation-for="Password" class="validation-message"></span>
                         </div>
 
-                        <div class="form-row">
-                            <label class="checkbox-inline">
-                                <input asp-for="RememberMe" />
-                                @Html.DisplayNameFor(m => m.RememberMe)
-                            </label>
-                        </div>
+                        <!-- Remember me removed -->
 
                         <div class="form-actions">
                             <button type="submit" class="btn primary">Log in</button>
@@ -275,9 +287,11 @@
             $card.find('#registerForm').on('submit', function(e){
                 // client-side validation
                 var email = $card.find('#regEmail').val() || '';
+                var uname = $card.find('#regUsername').val() || '';
                 var pass = $card.find('#regPassword').val() || '';
                 var errors = [];
                 if (!email.trim()) errors.push('Email is required');
+                if (!uname.trim()) errors.push('Username is required');
                 if (!pass) errors.push('Password is required');
                 if (errors.length) {
                     alert(errors.join('\n'));

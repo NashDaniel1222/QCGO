@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using QCGO.Models;
 using QCGO.Services;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 
 namespace QCGO.Controllers
 {
@@ -42,12 +43,23 @@ namespace QCGO.Controllers
             var usernameInput = model.Email?.Trim() ?? string.Empty;
             if (_accountService.ValidateCredentials(usernameInput, model.Password))
             {
-                // create claims and sign in
+                // fetch account to include role/display name
+                var acct = _accountService.FindByUsername(usernameInput);
+
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, usernameInput),
                     new Claim("username", usernameInput)
                 };
+
+                if (acct != null)
+                {
+                    // include display name and role as claims for easier access
+                    if (!string.IsNullOrEmpty(acct.DisplayName))
+                        claims.Add(new Claim("displayName", acct.DisplayName));
+                    if (!string.IsNullOrEmpty(acct.Role))
+                        claims.Add(new Claim(ClaimTypes.Role, acct.Role));
+                }
 
                 var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 var principal = new ClaimsPrincipal(identity);
@@ -55,6 +67,13 @@ namespace QCGO.Controllers
                 HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
                 TempData["AuthMessage"] = "Logged in successfully.";
+
+                // redirect admin users to admin dashboard
+                if (acct != null && !string.IsNullOrEmpty(acct.Role) && acct.Role.Equals("admin", StringComparison.OrdinalIgnoreCase))
+                {
+                    return RedirectToAction("Admin", "Account");
+                }
+
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                     return Redirect(returnUrl);
                 return RedirectToAction("Index", "Home");
@@ -90,7 +109,7 @@ namespace QCGO.Controllers
             }
 
             // NOTE: storing plaintext (match your DB screenshot). Replace with hashing in production.
-            var created = _accountService.CreateAccount(email, model.Password);
+            var created = _accountService.CreateAccount(email, model.Password, model.Username, "user", model.Birthday, model.Gender);
             if (created)
             {
                 TempData["AuthMessage"] = "Registration successful — please sign in.";
@@ -129,6 +148,12 @@ namespace QCGO.Controllers
                 return Challenge();
             }
 
+            // If this account is an admin, redirect to the Admin dashboard
+            if (!string.IsNullOrEmpty(acct.Role) && acct.Role.Equals("admin", StringComparison.OrdinalIgnoreCase))
+            {
+                return RedirectToAction("Admin");
+            }
+
             // include bookmarked spots for the profile view
             var bookmarks = acct.Bookmarks ?? new List<string>();
             var bookmarkedSpots = new List<QCGO.Models.Spot>();
@@ -141,6 +166,192 @@ namespace QCGO.Controllers
 
             // pass account to view (shows username and password per request)
             return View(acct);
+        }
+
+        [HttpGet]
+        public IActionResult Admin()
+        {
+            // ensure user is authenticated
+            if (!User?.Identity?.IsAuthenticated ?? true)
+            {
+                return Challenge();
+            }
+
+            var nameClaim = User?.FindFirst(ClaimTypes.Name)?.Value;
+            var username = nameClaim ?? User?.FindFirst("username")?.Value;
+            if (string.IsNullOrEmpty(username)) return Challenge();
+
+            var acct = _accountService.FindByUsername(username);
+            if (acct == null) return Challenge();
+
+            if (!acct.Role.Equals("admin", StringComparison.OrdinalIgnoreCase))
+            {
+                // not an admin - sign out and redirect to login
+                HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                return RedirectToAction("Login");
+            }
+
+            // Provide available districts to the view so admin can choose from existing ones
+            ViewBag.AllDistricts = _spotService.GetAllDistricts();
+            // Provide a list of existing spots (id + name) for edit functionality
+            ViewBag.AllSpots = _spotService.GetAll().Select(s => new { Id = s.Id, Name = s.Name }).ToList();
+            // Render admin Add Spot view (admins can add spots here)
+            return View();
+        }
+
+        // Return spot details as JSON for client-side editing
+        [HttpGet]
+        public IActionResult GetSpot(string id)
+        {
+            if (!User?.Identity?.IsAuthenticated ?? true) return Unauthorized();
+            var nameClaim = User?.FindFirst(ClaimTypes.Name)?.Value;
+            var username = nameClaim ?? User?.FindFirst("username")?.Value;
+            if (string.IsNullOrEmpty(username)) return Unauthorized();
+
+            var acct = _accountService.FindByUsername(username);
+            if (acct == null || !acct.Role.Equals("admin", StringComparison.OrdinalIgnoreCase)) return Forbid();
+
+            var spot = _spotService.GetById(id);
+            if (spot == null) return NotFound();
+            return Json(spot);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult EditSpot(SpotInputViewModel model, string spotId)
+        {
+            // ensure authenticated admin
+            if (!User?.Identity?.IsAuthenticated ?? true) return Challenge();
+
+            var nameClaim = User?.FindFirst(ClaimTypes.Name)?.Value;
+            var username = nameClaim ?? User?.FindFirst("username")?.Value;
+            if (string.IsNullOrEmpty(username)) return Challenge();
+
+            var acct = _accountService.FindByUsername(username);
+            if (acct == null || !acct.Role.Equals("admin", StringComparison.OrdinalIgnoreCase))
+            {
+                HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                return RedirectToAction("Login");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                TempData["AdminMessage"] = "Invalid spot data.";
+                ViewBag.AllDistricts = _spotService.GetAllDistricts();
+                ViewBag.AllSpots = _spotService.GetAll().Select(s => new { Id = s.Id, Name = s.Name }).ToList();
+                return View("Admin");
+            }
+
+            // Ensure tags field (form may send comma-separated string)
+            var tagsField = Request.Form["Tags"].ToString();
+            if ((model.Tags == null || model.Tags.Count == 0) && !string.IsNullOrWhiteSpace(tagsField))
+            {
+                model.Tags = tagsField.Split(',').Select(t => t.Trim()).Where(t => !string.IsNullOrEmpty(t)).ToList();
+            }
+
+            var existing = _spotService.GetById(spotId);
+            if (existing == null)
+            {
+                TempData["AdminMessage"] = "Spot not found.";
+                ViewBag.AllDistricts = _spotService.GetAllDistricts();
+                ViewBag.AllSpots = _spotService.GetAll().Select(s => new { Id = s.Id, Name = s.Name }).ToList();
+                return View("Admin");
+            }
+
+            // Map input to existing spot
+            existing.Name = model.Name;
+            existing.District = model.District;
+            existing.Barangay = model.Barangay;
+            existing.Type = model.Type;
+            existing.Description = model.Description;
+            existing.Tags = model.Tags ?? new List<string>();
+            existing.Coordinates = new Coordinates { Lat = model.Latitude, Lng = model.Longitude };
+            existing.Accessibility = new Accessibility {
+                PublicTransport = model.PublicTransport,
+                ParkingAvailable = model.ParkingAvailable,
+                WheelchairAccessible = model.WheelchairAccessible
+            };
+            existing.MapOpenHours = new MapOpenHours { Url = model.MapUrl };
+
+            var updated = _spotService.UpdateSpot(existing);
+            if (updated)
+            {
+                TempData["AdminMessage"] = "Spot updated successfully.";
+                return RedirectToAction("Details", "Home", new { id = existing.Id });
+            }
+
+            TempData["AdminMessage"] = "Failed to update spot.";
+            ViewBag.AllDistricts = _spotService.GetAllDistricts();
+            ViewBag.AllSpots = _spotService.GetAll().Select(s => new { Id = s.Id, Name = s.Name }).ToList();
+            return View("Admin");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Admin(SpotInputViewModel model)
+        {
+            // ensure authenticated admin
+            if (!User?.Identity?.IsAuthenticated ?? true) return Challenge();
+
+            var nameClaim = User?.FindFirst(ClaimTypes.Name)?.Value;
+            var username = nameClaim ?? User?.FindFirst("username")?.Value;
+            if (string.IsNullOrEmpty(username)) return Challenge();
+
+            var acct = _accountService.FindByUsername(username);
+            if (acct == null || !acct.Role.Equals("admin", StringComparison.OrdinalIgnoreCase))
+            {
+                HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                return RedirectToAction("Login");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                TempData["AdminMessage"] = "Invalid spot data.";
+                ViewBag.AllDistricts = _spotService.GetAllDistricts();
+                return View();
+            }
+
+            // Ensure tags field (form may send comma-separated string)
+            var tagsField = Request.Form["Tags"].ToString();
+            if ((model.Tags == null || model.Tags.Count == 0) && !string.IsNullOrWhiteSpace(tagsField))
+            {
+                model.Tags = tagsField.Split(',').Select(t => t.Trim()).Where(t => !string.IsNullOrEmpty(t)).ToList();
+            }
+
+            // Map input model to Spot
+            var spot = new Spot
+            {
+                Name = model.Name,
+                District = model.District,
+                Barangay = model.Barangay,
+                Type = model.Type,
+                Description = model.Description,
+                Tags = model.Tags ?? new List<string>(),
+                Coordinates = new Coordinates { Lat = model.Latitude, Lng = model.Longitude },
+                Accessibility = new Accessibility {
+                    PublicTransport = model.PublicTransport,
+                    ParkingAvailable = model.ParkingAvailable,
+                    WheelchairAccessible = model.WheelchairAccessible
+                },
+                MapOpenHours = new MapOpenHours { Url = model.MapUrl },
+                AddedBy = username,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var added = _spotService.AddSpot(spot);
+            if (added)
+            {
+                TempData["AdminMessage"] = "Spot added successfully.";
+                if (!string.IsNullOrEmpty(spot.Id))
+                {
+                    return RedirectToAction("Details", "Home", new { id = spot.Id });
+                }
+                return RedirectToAction("Index", "Home");
+            }
+
+            TempData["AdminMessage"] = "Failed to add spot.";
+            ViewBag.AllDistricts = _spotService.GetAllDistricts();
+            return View();
         }
 
         [HttpPost]

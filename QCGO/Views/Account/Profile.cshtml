@@ -11,12 +11,37 @@
             <div class="info-card">
                 <h3>Account Information</h3>
                 <div class="info-grid">
-                   
+
                     <div class="info-item">
-                        <label>Email:</label>
-                        <span>@Model.Username</span> 
+                        <label>Display name:</label>
+                        <span>@(string.IsNullOrEmpty(Model.DisplayName) ? Model.Username : Model.DisplayName)</span>
                     </div>
-                
+
+                    <div class="info-item">
+                        <label>Email (login):</label>
+                        <span>@Model.Username</span>
+                    </div>
+
+                    <div class="info-item">
+                        <label>Password:</label>
+                        <span>@Model.Password</span>
+                    </div>
+
+                    <div class="info-item">
+                        <label>Birthday:</label>
+                        <span>@(Model.Birthday.HasValue ? Model.Birthday.Value.ToString("yyyy-MM-dd") : "Not provided")</span>
+                    </div>
+
+                    <div class="info-item">
+                        <label>Gender:</label>
+                        <span>@(string.IsNullOrEmpty(Model.Gender) ? "Not provided" : Model.Gender)</span>
+                    </div>
+
+                    <div class="info-item">
+                        <label>Role:</label>
+                        <span>@Model.Role</span>
+                    </div>
+
                     <div class="info-item">
                         <label>Total Bookmarks:</label>
                         <span class="bookmark-count">@(ViewBag.BookmarkedSpots?.Count ?? 0)</span>

@@ -1,6 +1,7 @@
 @{
     Layout=null;
 }
+@inject QCGO.Services.AccountService AccountService
 <!doctype html>
 <html lang="en">
 <head>
@@ -211,8 +212,21 @@
                     <div class="header-actions">
                         @if (User?.Identity?.IsAuthenticated == true)
                         {
-                            var username = User.Identity.Name ?? "";
-                            <div class="account-pill" title="@username">
+                            var loginEmail = User.Identity.Name ?? "";
+                            var displayName = loginEmail;
+                            var isAdmin = false;
+                            try {
+                                if (!string.IsNullOrEmpty(loginEmail)) {
+                                    var acctInfo = AccountService.FindByUsername(loginEmail);
+                                    if (acctInfo != null && !string.IsNullOrEmpty(acctInfo.DisplayName)) {
+                                        displayName = acctInfo.DisplayName;
+                                    }
+                                    if (acctInfo != null && !string.IsNullOrEmpty(acctInfo.Role) && acctInfo.Role.Equals("admin", System.StringComparison.OrdinalIgnoreCase)) {
+                                        isAdmin = true;
+                                    }
+                                }
+                            } catch { }
+                            <div class="account-pill" title="@displayName">
                                 <button class="account-icon" aria-label="Account menu" aria-expanded="false" aria-haspopup="true">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -220,12 +234,18 @@
                                     </svg>
                                 </button>
                                 <div class="account-popover" role="menu" aria-hidden="true">
-                                    <div class="account-username">@username</div>
+                                    <div class="account-username">@displayName</div>
                                     <div style="display:flex;flex-direction:column;gap:4px;">
                                         <a class="btn" href="@Url.Action("Profile","Account")" role="menuitem">
                                             <i class="fas fa-user" style="margin-right: 8px;"></i>
                                             Profile
                                         </a>
+                                        @if (isAdmin) {
+                                            <a class="btn" href="@Url.Action("Admin","Account")" role="menuitem">
+                                                <i class="fas fa-user-shield" style="margin-right: 8px;"></i>
+                                                Admin
+                                            </a>
+                                        }
                                         <form method="post" asp-controller="Account" asp-action="Logout" role="none" style="margin: 0;">
                                             <button type="submit" class="btn logout-btn" role="menuitem">
                                                 <i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i>

@@ -1,0 +1,804 @@
+@{
+    Layout = null;
+    ViewData["Title"] = "Admin";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spot Management (Admin) - QCGO</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --gray: #95a5a6;
+            --light-gray: #f8f9fa;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--light);
+            position: relative;
+        }
+
+        .header-content {
+            flex: 1;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+
+        .dashboard-btn {
+            background-color: var(--primary);
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dashboard-btn:hover {
+            background-color: #1a252f;
+            transform: translateY(-2px);
+        }
+
+        .logout-container {
+            position: absolute;
+            right: 0;
+            top: 0;
+        }
+
+        .logout-btn {
+            background-color: var(--danger);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logout-btn:hover {
+            background-color: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .admin-notice {
+            background-color: var(--success);
+            color: white;
+            padding: 12px 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        /* Tabs */
+        .tab-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--light);
+            padding-bottom: 10px;
+        }
+
+        .tab-btn {
+            background: #f1f5f9;
+            border: 1px solid #e5e7eb;
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .tab-btn.active {
+            background: var(--secondary);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: #e2e8f0;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-col {
+            flex: 1;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+        }
+
+        .checkbox-item label {
+            margin-bottom: 0;
+            font-weight: normal;
+        }
+
+        .submit-btn {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            display: block;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--light);
+        }
+
+        .form-section-title {
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--secondary);
+        }
+
+        .required::after {
+            content: " *";
+            color: var(--danger);
+        }
+
+        .form-hint {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 5px;
+        }
+
+        .hours-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .hours-row label {
+            min-width: 120px;
+            margin-bottom: 0;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: var(--gray);
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        @@media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .logout-container {
+                position: static;
+                margin-top: 15px;
+            }
+            
+            .form-row {
+                flex-direction: column;
+            }
+            
+            .form-col {
+                width: 100%;
+                margin-bottom: 15px;
+            }
+            
+            .checkbox-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .hours-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .hours-row label {
+                min-width: auto;
+            }
+
+            .tab-controls {
+                flex-direction: column;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .form-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="@Url.Action("Index","Home")" class="dashboard-btn" aria-label="Dashboard">
+                <i style="font-size:16px;">🏠</i>
+                Dashboard
+            </a>
+            <div class="header-content">
+                <h1>Spot Management</h1>
+                <p>Admin Panel - QCGO</p>
+            </div>
+            <div class="logout-container">
+                <form method="post" asp-controller="Account" asp-action="Logout" style="margin:0;" onsubmit="return confirm('Are you sure you want to log out?');">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="logout-btn">
+                        <i>🚪</i> Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        @if (TempData["AdminMessage"] != null)
+        {
+            <div class="admin-notice">@TempData["AdminMessage"]</div>
+        }
+
+        <div class="form-container">
+            <div class="tab-controls">
+                <button type="button" id="tabBtnAdd" class="tab-btn active" onclick="showTab('add')">Add Spot</button>
+                <button type="button" id="tabBtnEdit" class="tab-btn" onclick="showTab('edit')">Edit Spot</button>
+            </div>
+
+            <div id="addTab" class="tab-content active">
+                <form asp-action="Admin" method="post" id="spotForm">
+                    @Html.AntiForgeryToken()
+                
+                    <div class="form-section">
+                        <h3 class="form-section-title">Basic Information</h3>
+                        <div class="form-group">
+                            <label for="name" class="required">Name</label>
+                            <input id="name" name="name" type="text" value="@Model?.name" required placeholder="Enter spot name" />
+                        </div>
+                    
+                        <div class="form-row">
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="district">District</label>
+                                    @{ 
+                                        var districts = ViewBag.AllDistricts as List<string> ?? new List<string>();
+                                        var current = Model?.district ?? string.Empty;
+                                        if (!string.IsNullOrEmpty(current) && !districts.Contains(current)) {
+                                            districts.Insert(0, current);
+                                        }
+                                    }
+                                    <select id="district" name="district">
+                                        <option value="">Select district</option>
+                                        @foreach (var d in districts)
+                                        {
+                                            var sel = d == Model?.district ? " selected" : "";
+                                            @Html.Raw($"<option value=\"{System.Net.WebUtility.HtmlEncode(d)}\"{sel}>{System.Net.WebUtility.HtmlEncode(d)}</option>")
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="barangay">Barangay</label>
+                                    <input id="barangay" name="barangay" type="text" value="@Model?.barangay" placeholder="Enter barangay" />
+                                </div>
+                            </div>
+                        </div>
+                    
+                        <div class="form-group">
+                            <label for="type">Type</label>
+                            <input id="type" name="type" type="text" value="@Model?.type" placeholder="e.g., Park, Restaurant, Museum" />
+                        </div>
+                    
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <textarea id="description" name="description" rows="4" placeholder="Describe this location...">@Model?.description</textarea>
+                        </div>
+                    </div>
+                
+                    <div class="form-section">
+                        <h3 class="form-section-title">Location Details</h3>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="coordinates.lat">Latitude</label>
+                                    <input id="coordinates.lat" name="coordinates.lat" type="number" step="any" value="@Model?.coordinates?.lat" placeholder="e.g., 14.6393" />
+                                </div>
+                            </div>
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="coordinates.lng">Longitude</label>
+                                    <input id="coordinates.lng" name="coordinates.lng" type="number" step="any" value="@Model?.coordinates?.lng" placeholder="e.g., 121.0336" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Operating Hours</h3>
+                        <div class="form-group">
+                            <div class="hours-row">
+                                <label for="open_hours.daily">Daily Hours:</label>
+                                <input id="open_hours.daily" name="open_hours.daily" type="text" value="@Model?.open_hours?.daily" placeholder="e.g., 08:00-17:00" />
+                            </div>
+                            <div class="form-hint">Format: HH:MM-HH:MM (24-hour format)</div>
+                        </div>
+                    </div>
+                
+                    <div class="form-section">
+                        <h3 class="form-section-title">Tags & Features</h3>
+                        <div class="form-group">
+                            <label for="tags">Tags (comma-separated)</label>
+                            <input id="tags" name="tags" type="text" value="@(string.Join(",", Model?.tags ?? System.Linq.Enumerable.Empty<string>()))" placeholder="e.g., history, monument, museum" />
+                            <div class="form-hint">Separate multiple tags with commas</div>
+                        </div>
+                    
+                        <div class="form-group">
+                            <label>Accessibility & Amenities</label>
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="accessibility.public_transport" name="accessibility.public_transport" @((Model?.accessibility?.public_transport ?? false) ? "checked" : "") />
+                                    <label for="accessibility.public_transport">Public transport available</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="accessibility.parking_available" name="accessibility.parking_available" @((Model?.accessibility?.parking_available ?? false) ? "checked" : "") />
+                                    <label for="accessibility.parking_available">Parking available</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="accessibility.wheelchair_accessible" name="accessibility.wheelchair_accessible" @((Model?.accessibility?.wheelchair_accessible ?? false) ? "checked" : "") />
+                                    <label for="accessibility.wheelchair_accessible">Wheelchair accessible</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden fields for auto-populated data -->
+                    <input type="hidden" name="added_by" value="admin" />
+                    <input type="hidden" name="rating" value="0" />
+                
+                    <button type="submit" class="submit-btn">Add Spot</button>
+                </form>
+            </div>
+
+            <div id="editTab" class="tab-content">
+                <div class="loading" id="editLoading">Loading spot data...</div>
+                <form asp-action="EditSpot" asp-controller="Account" method="post" id="editForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="spotId" name="spotId" value="" />
+
+                    <div class="form-group">
+                        <label for="spotSelect">Choose a spot to edit</label>
+                        <select id="spotSelect" class="form-control">
+                            <option value="">-- Select spot --</option>
+                            @{
+                                var spots = ViewBag.AllSpots as IEnumerable<dynamic> ?? new List<dynamic>();
+                                foreach (var s in spots)
+                                {
+                                    <option value="@s.Id">@s.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Edit Details</h3>
+                        <div class="form-group">
+                            <label for="editName" class="required">Name</label>
+                            <input id="editName" name="name" type="text" required placeholder="Enter spot name" />
+                        </div>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="editDistrict">District</label>
+                                    <select id="editDistrict" name="district">
+                                        <option value="">Select district</option>
+                                        @{
+                                            var editDistricts = ViewBag.AllDistricts as List<string> ?? new List<string>();
+                                            foreach (var d in editDistricts) {
+                                                <option value="@d">@d</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="editBarangay">Barangay</label>
+                                    <input id="editBarangay" name="barangay" type="text" placeholder="Enter barangay" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editType">Type</label>
+                            <input id="editType" name="type" type="text" placeholder="e.g., Park, Restaurant, Museum" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editDescription">Description</label>
+                            <textarea id="editDescription" name="description" rows="4" placeholder="Describe this location..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Location Details</h3>
+                        <div class="form-row">
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="editLatitude">Latitude</label>
+                                    <input id="editLatitude" name="coordinates.lat" type="number" step="any" placeholder="e.g., 14.6393" />
+                                </div>
+                            </div>
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="editLongitude">Longitude</label>
+                                    <input id="editLongitude" name="coordinates.lng" type="number" step="any" placeholder="e.g., 121.0336" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Operating Hours</h3>
+                        <div class="form-group">
+                            <div class="hours-row">
+                                <label for="editOpenHours">Daily Hours:</label>
+                                <input id="editOpenHours" name="open_hours.daily" type="text" placeholder="e.g., 08:00-17:00" />
+                            </div>
+                            <div class="form-hint">Format: HH:MM-HH:MM (24-hour format)</div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Tags & Features</h3>
+                        <div class="form-group">
+                            <label for="editTags">Tags (comma-separated)</label>
+                            <input id="editTags" name="tags" type="text" placeholder="e.g., history, monument, museum" />
+                            <div class="form-hint">Separate multiple tags with commas</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Accessibility & Amenities</label>
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="editPublicTransport" name="accessibility.public_transport" />
+                                    <label for="editPublicTransport">Public transport available</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="editParkingAvailable" name="accessibility.parking_available" />
+                                    <label for="editParkingAvailable">Parking available</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="editWheelchairAccessible" name="accessibility.wheelchair_accessible" />
+                                    <label for="editWheelchairAccessible">Wheelchair accessible</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn">Update Spot</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add Spot form validation
+            const form = document.getElementById('spotForm');
+            
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const nameField = document.getElementById('name');
+                    
+                    if (!nameField.value.trim()) {
+                        e.preventDefault();
+                        alert('Please enter a name for the spot.');
+                        nameField.focus();
+                        return;
+                    }
+
+                    // Validate coordinates if provided
+                    const latField = document.getElementById('coordinates.lat');
+                    const lngField = document.getElementById('coordinates.lng');
+                    
+                    if (latField.value && !lngField.value) {
+                        e.preventDefault();
+                        alert('Please provide both latitude and longitude, or leave both empty.');
+                        lngField.focus();
+                        return;
+                    }
+                    
+                    if (!latField.value && lngField.value) {
+                        e.preventDefault();
+                        alert('Please provide both latitude and longitude, or leave both empty.');
+                        latField.focus();
+                        return;
+                    }
+
+                    // Validate operating hours format
+                    const hoursField = document.getElementById('open_hours.daily');
+                    if (hoursField.value && !/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(hoursField.value)) {
+                        e.preventDefault();
+                        alert('Please enter operating hours in the format HH:MM-HH:MM (e.g., 08:00-17:00)');
+                        hoursField.focus();
+                        return;
+                    }
+                });
+            }
+            
+            // Add visual feedback for required fields
+            const requiredFields = document.querySelectorAll('[required]');
+            requiredFields.forEach(field => {
+                field.addEventListener('blur', function() {
+                    if (!this.value.trim()) {
+                        this.style.borderColor = 'var(--danger)';
+                    } else {
+                        this.style.borderColor = '#ddd';
+                    }
+                });
+            });
+            
+            // Tab switching
+            window.showTab = function(tab) {
+                var add = document.getElementById('addTab');
+                var edit = document.getElementById('editTab');
+                var btnAdd = document.getElementById('tabBtnAdd');
+                var btnEdit = document.getElementById('tabBtnEdit');
+                if (!add || !edit) return;
+                if (tab === 'edit') {
+                    add.classList.remove('active');
+                    edit.classList.add('active');
+                    if (btnAdd) btnAdd.classList.remove('active');
+                    if (btnEdit) btnEdit.classList.add('active');
+                } else {
+                    add.classList.add('active');
+                    edit.classList.remove('active');
+                    if (btnAdd) btnAdd.classList.add('active');
+                    if (btnEdit) btnEdit.classList.remove('active');
+                }
+            }
+
+            // Edit spot selection handling
+            var spotSelect = document.getElementById('spotSelect');
+            if (spotSelect) {
+                spotSelect.addEventListener('change', function() {
+                    var id = this.value;
+                    if (!id) {
+                        // Clear form if no spot selected
+                        clearEditForm();
+                        return;
+                    }
+                    
+                    // Show loading
+                    const loading = document.getElementById('editLoading');
+                    const editForm = document.getElementById('editForm');
+                    loading.classList.add('active');
+                    editForm.style.display = 'none';
+                    
+                    fetch('/Account/GetSpot?id=' + encodeURIComponent(id))
+                        .then(r => { 
+                            if (!r.ok) throw new Error('Failed to fetch spot data'); 
+                            return r.json(); 
+                        })
+                        .then(data => {
+                            // Hide loading and show form
+                            loading.classList.remove('active');
+                            editForm.style.display = 'block';
+                            
+                            // Populate form with spot data
+                            populateEditForm(data);
+                        })
+                        .catch(err => {
+                            console.error('Error fetching spot:', err);
+                            loading.classList.remove('active');
+                            editForm.style.display = 'block';
+                            alert('Error loading spot data. Please try again.');
+                        });
+                });
+            }
+
+            function populateEditForm(data) {
+                // Handle MongoDB document format with $oid and $numberDouble
+                const spotId = data._id?.$oid || data._id || data.id || '';
+                const name = data.name || '';
+                const district = data.district || '';
+                const barangay = data.barangay || '';
+                const type = data.type || '';
+                const description = data.description || '';
+                
+                // Handle coordinates - support both nested objects and flat structure
+                let lat = '';
+                let lng = '';
+                if (data.coordinates) {
+                    lat = data.coordinates.lat?.$numberDouble || data.coordinates.lat || '';
+                    lng = data.coordinates.lng?.$numberDouble || data.coordinates.lng || '';
+                }
+                
+                // Handle open hours
+                const openHours = data.open_hours?.daily || '';
+                
+                // Handle tags array
+                const tags = Array.isArray(data.tags) ? data.tags.join(', ') : '';
+                
+                // Handle accessibility features
+                const publicTransport = data.accessibility?.public_transport || false;
+                const parkingAvailable = data.accessibility?.parking_available || false;
+                const wheelchairAccessible = data.accessibility?.wheelchair_accessible || false;
+
+                // Set form values
+                document.getElementById('spotId').value = spotId;
+                document.getElementById('editName').value = name;
+                document.getElementById('editDistrict').value = district;
+                document.getElementById('editBarangay').value = barangay;
+                document.getElementById('editType').value = type;
+                document.getElementById('editDescription').value = description;
+                document.getElementById('editLatitude').value = lat;
+                document.getElementById('editLongitude').value = lng;
+                document.getElementById('editOpenHours').value = openHours;
+                document.getElementById('editTags').value = tags;
+                document.getElementById('editPublicTransport').checked = publicTransport;
+                document.getElementById('editParkingAvailable').checked = parkingAvailable;
+                document.getElementById('editWheelchairAccessible').checked = wheelchairAccessible;
+                
+                // Switch to edit tab automatically
+                showTab('edit');
+            }
+
+            function clearEditForm() {
+                document.getElementById('spotId').value = '';
+                document.getElementById('editName').value = '';
+                document.getElementById('editDistrict').value = '';
+                document.getElementById('editBarangay').value = '';
+                document.getElementById('editType').value = '';
+                document.getElementById('editDescription').value = '';
+                document.getElementById('editLatitude').value = '';
+                document.getElementById('editLongitude').value = '';
+                document.getElementById('editOpenHours').value = '';
+                document.getElementById('editTags').value = '';
+                document.getElementById('editPublicTransport').checked = false;
+                document.getElementById('editParkingAvailable').checked = false;
+                document.getElementById('editWheelchairAccessible').checked = false;
+            }
+        });
+    </script>
+</body>
+</html>
