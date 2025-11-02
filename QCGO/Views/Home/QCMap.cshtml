@@ -247,3 +247,7 @@
         }
     }
 </script>
+
+@foreach (var spot in Model) {
+    <img src='@spot.GetImageUrl()' alt='Spot Image' />
+}

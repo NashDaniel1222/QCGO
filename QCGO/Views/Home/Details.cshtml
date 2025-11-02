@@ -49,7 +49,7 @@
             @if (!string.IsNullOrEmpty(Model?.ImageUrl))
             {
                 var encoded = System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Model.ImageUrl));
-                <img src='@Url.Action("Fetch", "Image", new { b64 = encoded })' alt='@Model.Name' />
+                <img src='@Model.GetImageUrl()' alt='Spot Image' />
             }
             else
             {

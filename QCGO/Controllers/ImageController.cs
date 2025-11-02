@@ -1,5 +1,7 @@
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Hosting;
+using System.IO;
 
 namespace QCGO.Controllers
 {
@@ -7,17 +9,18 @@ namespace QCGO.Controllers
     public class ImageController : Controller
     {
         private readonly IHttpClientFactory _httpFactory;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public ImageController(IHttpClientFactory httpFactory)
+        public ImageController(IHttpClientFactory httpFactory, IWebHostEnvironment webHostEnvironment)
         {
             _httpFactory = httpFactory;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         // GET /img/fetch/{base64Url}
         [HttpGet("fetch/{b64}")]
         public async Task<IActionResult> Fetch(string b64)
         {
-            // guard: limit base64 length to reasonable size (~2k chars -> ~1.5KB URL)
             if (b64?.Length > 2000) return BadRequest("url too long");
             if (string.IsNullOrEmpty(b64)) return BadRequest();
 
@@ -32,11 +35,52 @@ namespace QCGO.Controllers
                 return BadRequest();
             }
 
-            if (!url.StartsWith("http://") && !url.StartsWith("https://")) return BadRequest();
+            // Handle local files (paths starting with ~/ or /)
+            if (url.StartsWith("~/") || url.StartsWith("/"))
+            {
+                try
+                {
+                    var webRootPath = _webHostEnvironment.WebRootPath;
+                    
+                    // Remove ~/ prefix if present
+                    var relativePath = url.StartsWith("~/") ? url.Substring(2) : url.TrimStart('/');
+                    
+                    // Security: prevent directory traversal attacks
+                    if (relativePath.Contains("..") || Path.IsPathRooted(relativePath))
+                    {
+                        return BadRequest("Invalid file path");
+                    }
+
+                    var fullPath = Path.Combine(webRootPath, relativePath);
+
+                    // Check if file exists
+                    if (!System.IO.File.Exists(fullPath))
+                    {
+                        return NotFound($"File not found: {relativePath}");
+                    }
+
+                    // Get content type based on file extension
+                    var contentType = GetContentType(fullPath);
+                    
+                    // Serve the local file
+                    return PhysicalFile(fullPath, contentType);
+                }
+                catch (Exception ex)
+                {
+                    return StatusCode(500, $"Error serving local file: {ex.Message}");
+                }
+            }
+
+            // Handle HTTP URLs (existing logic)
+            if (!url.StartsWith("http://") && !url.StartsWith("https://")) 
+                return BadRequest("URL must be http, https, or a local path starting with ~/ or /");
 
             var client = _httpFactory.CreateClient();
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("image/*"));
+            
+            // Set timeout for external requests
+            client.Timeout = TimeSpan.FromSeconds(30);
 
             try
             {
@@ -45,7 +89,6 @@ namespace QCGO.Controllers
 
                 var contentType = resp.Content.Headers.ContentType?.MediaType ?? string.Empty;
 
-                // If the response is HTML, try to extract an image URL from meta tags or first <img>
                 if (contentType.Contains("text/html"))
                 {
                     var html = await resp.Content.ReadAsStringAsync();
@@ -107,6 +150,25 @@ namespace QCGO.Controllers
             {
                 return StatusCode(502, ex.Message);
             }
+        }
+
+        /// <summary>
+        /// Gets the MIME content type based on file extension
+        /// </summary>
+        private string GetContentType(string filePath)
+        {
+            var extension = Path.GetExtension(filePath).ToLowerInvariant();
+            return extension switch
+            {
+                ".png" => "image/png",
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".gif" => "image/gif",
+                ".webp" => "image/webp",
+                ".bmp" => "image/bmp",
+                ".svg" => "image/svg+xml",
+                ".ico" => "image/x-icon",
+                _ => "application/octet-stream"
+            };
         }
     }
 }

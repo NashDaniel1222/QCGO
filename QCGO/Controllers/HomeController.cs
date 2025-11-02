@@ -62,6 +62,9 @@ namespace QCGO.Controllers
                 }
             }
             ViewBag.IsBookmarked = isBookmarked;
+
+            var imageUrl = spot.GetImageUrl();
+
             return View(spot);
         }
 

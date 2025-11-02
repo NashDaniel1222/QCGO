@@ -25,7 +25,36 @@ namespace QCGO.Models
         public string? Type { get; set; }
 
         [BsonElement("image_url")]
-        public string? ImageUrl { get; set; }
+        public string? ImageUrl { get; set; } // Store the relative path
+
+        public string? GetImageUrl()
+        {
+            if (string.IsNullOrEmpty(ImageUrl))
+                return null;
+
+            // If it's already an absolute URL, return as-is
+            if (ImageUrl.StartsWith("http://") || ImageUrl.StartsWith("https://"))
+                return ImageUrl;
+
+            // Normalize Windows backslashes to forward slashes
+            var normalized = ImageUrl.Replace('\\', '/').Trim();
+
+            // If path contains "wwwroot", extract the portion after it
+            var idx = normalized.IndexOf("wwwroot", StringComparison.OrdinalIgnoreCase);
+            if (idx >= 0)
+            {
+                var after = normalized.Substring(idx + "wwwroot".Length);
+                var path = after.TrimStart('/', '\\');
+                return "/" + path.Replace('\\', '/').TrimStart('/');
+            }
+
+            // If the value already starts with a slash, treat it as app-relative
+            if (normalized.StartsWith("/"))
+                return normalized;
+
+            // Otherwise treat it as relative to wwwroot and return a web-rooted path
+            return "/" + normalized.TrimStart('/');
+        }
 
         [BsonElement("description")]
         public string? Description { get; set; }
@@ -67,7 +96,7 @@ namespace QCGO.Models
         public bool PublicTransport { get; set; }
 
         [BsonElement("parking_available")]
-        public bool ParkingAvailable { get; set; } // ✅ FIXED: was string?, now bool
+        public bool ParkingAvailable { get; set; }
 
         [BsonElement("wheelchair_accessible")]
         public bool WheelchairAccessible { get; set; }

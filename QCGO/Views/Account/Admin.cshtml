@@ -340,6 +340,35 @@
             }
         }
 
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .delete-btn {
+            background-color: var(--danger);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            flex: 1;
+        }
+
+        .delete-btn:hover {
+            background-color: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .submit-btn {
+            flex: 2;
+        }
+
         @@media (max-width: 480px) {
             .container {
                 padding: 10px;
@@ -347,6 +376,14 @@
             
             .form-container {
                 padding: 20px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .submit-btn, .delete-btn {
+                width: 100%;
             }
         }
     </style>
@@ -614,7 +651,10 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="submit-btn">Update Spot</button>
+                    <div class="form-actions">
+                        <button type="submit" class="submit-btn">Update Spot</button>
+                        <button type="button" class="delete-btn" onclick="deleteSpot()">Delete Spot</button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -797,6 +837,57 @@
                 document.getElementById('editPublicTransport').checked = false;
                 document.getElementById('editParkingAvailable').checked = false;
                 document.getElementById('editWheelchairAccessible').checked = false;
+            }
+
+            window.deleteSpot = function() {
+                const spotId = document.getElementById('spotId').value;
+                const spotName = document.getElementById('editName').value;
+                
+                if (!spotId) {
+                    alert('Please select a spot to delete.');
+                    return;
+                }
+
+                if (!confirm(`Are you sure you want to delete "${spotName}"? This action cannot be undone.`)) {
+                    return;
+                }
+
+                fetch('/Account/DeleteSpot', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Include anti-forgery token
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify({ id: spotId })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Remove the spot from the select dropdown
+                        const option = document.querySelector(`#spotSelect option[value="${spotId}"]`);
+                        if (option) {
+                            option.remove();
+                        }
+                        // Clear the form
+                        clearEditForm();
+                        // Reset select
+                        document.getElementById('spotSelect').value = '';
+                        // Show success message
+                        alert('Spot deleted successfully.');
+                    } else {
+                        throw new Error(data.message || 'Failed to delete spot');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to delete spot. Please try again.');
+                });
             }
         });
     </script>

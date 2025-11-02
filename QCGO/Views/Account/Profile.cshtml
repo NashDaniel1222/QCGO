@@ -73,7 +73,7 @@
                             @if (!string.IsNullOrEmpty(spot.ImageUrl))
                             {
                                 var encoded = System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(spot.ImageUrl));
-                                <img src='@Url.Action("Fetch", "Image", new { b64 = encoded })' alt='@spot.Name' />
+                                <img src="@spot.GetImageUrl()" alt="@spot.Name" />
                             }
                             else
                             {

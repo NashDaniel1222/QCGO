@@ -27,15 +27,7 @@
                 <div class="suggest-card" style="width:260px; text-align:center;">
                     <div class="suggest-img" style="height:160px; overflow:hidden; border-radius:6px; background:#f3f4f6; margin-bottom:8px;">
                         @* Use ImageUrl if available; otherwise show placeholder image *@
-                        @if (!string.IsNullOrEmpty(s.ImageUrl))
-                        {
-                            var enc = System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(s.ImageUrl));
-                            <img src="@Url.Action("Fetch","Image", new { b64 = enc })" style="width:100%; height:100%; object-fit:cover;" alt="@s.Name" />
-                        }
-                        else
-                        {
-                            <img src="/images/district-placeholder.jpg" style="width:100%; height:100%; object-fit:cover;" alt="placeholder" />
-                        }
+                        <img src="@s.GetImageUrl()" alt="@s.Name" />
                     </div>
                     <div class="suggest-title" style="font-weight:700; margin-bottom:8px;">@s.Name</div>
                     <a class="discover-btn" href="@Url.Action("Details","Home", new { id = s.Id, q = Context.Request.Query["q"], tag = Context.Request.Query["tag"], district = Context.Request.Query["district"] })">DISCOVER</a>
