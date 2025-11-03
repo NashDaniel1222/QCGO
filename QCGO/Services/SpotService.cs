@@ -2,7 +2,9 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using QCGO.Models;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace QCGO.Services
 {
@@ -258,6 +260,74 @@ namespace QCGO.Services
         public List<string> GetAllDistricts()
         {
             var dict = GetDistrictCounts();
+            return dict.Keys.OrderBy(k => k).ToList();
+        }
+
+        // Return a dictionary of barangay -> count across the collection
+        public Dictionary<string, int> GetBarangayCounts()
+        {
+            if (!_connected || _spots == null) return new Dictionary<string, int>();
+
+            try
+            {
+                var pipeline = new[]
+                {
+                    new BsonDocument("$group", new BsonDocument
+                    {
+                        { "_id", "$barangay" },
+                        { "count", new BsonDocument("$sum", 1) }
+                    }),
+                    new BsonDocument("$sort", new BsonDocument("_id", 1))
+                };
+
+                var result = _spots.Aggregate<BsonDocument>(pipeline).ToList();
+                return result.Where(d => d.Contains("_id") && d["_id"].IsString && !string.IsNullOrWhiteSpace(d["_id"].AsString))
+                             .ToDictionary(doc => doc["_id"].AsString, doc => doc["count"].ToInt32());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while aggregating barangay counts in MongoDB.");
+                return new Dictionary<string, int>();
+            }
+        }
+
+        public List<string> GetAllBarangays()
+        {
+            var dict = GetBarangayCounts();
+            return dict.Keys.OrderBy(k => k).ToList();
+        }
+
+        // Return a dictionary of type -> count across the collection
+        public Dictionary<string, int> GetTypeCounts()
+        {
+            if (!_connected || _spots == null) return new Dictionary<string, int>();
+
+            try
+            {
+                var pipeline = new[]
+                {
+                    new BsonDocument("$group", new BsonDocument
+                    {
+                        { "_id", "$type" },
+                        { "count", new BsonDocument("$sum", 1) }
+                    }),
+                    new BsonDocument("$sort", new BsonDocument("_id", 1))
+                };
+
+                var result = _spots.Aggregate<BsonDocument>(pipeline).ToList();
+                return result.Where(d => d.Contains("_id") && d["_id"].IsString && !string.IsNullOrWhiteSpace(d["_id"].AsString))
+                             .ToDictionary(doc => doc["_id"].AsString, doc => doc["count"].ToInt32());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while aggregating type counts in MongoDB.");
+                return new Dictionary<string, int>();
+            }
+        }
+
+        public List<string> GetAllTypes()
+        {
+            var dict = GetTypeCounts();
             return dict.Keys.OrderBy(k => k).ToList();
         }
 

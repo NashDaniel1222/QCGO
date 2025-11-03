@@ -191,8 +191,10 @@ namespace QCGO.Controllers
                 return RedirectToAction("Login");
             }
 
-            // Provide available districts to the view so admin can choose from existing ones
+            // Provide available districts, barangays and types to the view so admin can choose from existing ones
             ViewBag.AllDistricts = _spotService.GetAllDistricts();
+            ViewBag.AllBarangays = _spotService.GetAllBarangays();
+            ViewBag.AllTypes = _spotService.GetAllTypes();
             // Provide a list of existing spots (id + name) for edit functionality
             ViewBag.AllSpots = _spotService.GetAll().Select(s => new { Id = s.Id, Name = s.Name }).ToList();
             // Render admin Add Spot view (admins can add spots here)
@@ -238,6 +240,8 @@ namespace QCGO.Controllers
             {
                 TempData["AdminMessage"] = "Invalid spot data.";
                 ViewBag.AllDistricts = _spotService.GetAllDistricts();
+                ViewBag.AllBarangays = _spotService.GetAllBarangays();
+                ViewBag.AllTypes = _spotService.GetAllTypes();
                 ViewBag.AllSpots = _spotService.GetAll().Select(s => new { Id = s.Id, Name = s.Name }).ToList();
                 return View("Admin");
             }
@@ -254,6 +258,8 @@ namespace QCGO.Controllers
             {
                 TempData["AdminMessage"] = "Spot not found.";
                 ViewBag.AllDistricts = _spotService.GetAllDistricts();
+                ViewBag.AllBarangays = _spotService.GetAllBarangays();
+                ViewBag.AllTypes = _spotService.GetAllTypes();
                 ViewBag.AllSpots = _spotService.GetAll().Select(s => new { Id = s.Id, Name = s.Name }).ToList();
                 return View("Admin");
             }
@@ -282,6 +288,8 @@ namespace QCGO.Controllers
 
             TempData["AdminMessage"] = "Failed to update spot.";
             ViewBag.AllDistricts = _spotService.GetAllDistricts();
+            ViewBag.AllBarangays = _spotService.GetAllBarangays();
+            ViewBag.AllTypes = _spotService.GetAllTypes();
             ViewBag.AllSpots = _spotService.GetAll().Select(s => new { Id = s.Id, Name = s.Name }).ToList();
             return View("Admin");
         }
@@ -308,6 +316,8 @@ namespace QCGO.Controllers
             {
                 TempData["AdminMessage"] = "Invalid spot data.";
                 ViewBag.AllDistricts = _spotService.GetAllDistricts();
+                ViewBag.AllBarangays = _spotService.GetAllBarangays();
+                ViewBag.AllTypes = _spotService.GetAllTypes();
                 return View();
             }
 
@@ -351,6 +361,8 @@ namespace QCGO.Controllers
 
             TempData["AdminMessage"] = "Failed to add spot.";
             ViewBag.AllDistricts = _spotService.GetAllDistricts();
+            ViewBag.AllBarangays = _spotService.GetAllBarangays();
+            ViewBag.AllTypes = _spotService.GetAllTypes();
             return View();
         }
 

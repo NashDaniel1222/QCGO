@@ -24,6 +24,9 @@ namespace QCGO.Models
         [BsonElement("type")]
         public string? Type { get; set; }
 
+        [BsonElement("category")]
+        public string? Category { get; set; }
+
         [BsonElement("image_url")]
         public string? ImageUrl { get; set; } // Store the relative path
 
@@ -77,7 +80,7 @@ namespace QCGO.Models
         [BsonElement("accessibility")]
         public Accessibility? Accessibility { get; set; }
 
-        [BsonElement("map_open_hours")]
+        [BsonElement("open_hours")]
         public MapOpenHours? MapOpenHours { get; set; }
     }
 
@@ -102,9 +105,29 @@ namespace QCGO.Models
         public bool WheelchairAccessible { get; set; }
     }
 
+    [BsonIgnoreExtraElements]
     public class MapOpenHours
     {
+        // Some documents use different keys for open hours (e.g. "sun_thu").
+        // Add common mappings and ignore unknown elements to be tolerant of variations in the DB.
+        [BsonElement("mon_fri")]
+        public string? MonFri { get; set; }
+
+        [BsonElement("saturday")]
+        public string? Saturday { get; set; }
+
+        [BsonElement("sunday")]
+        public string? Sunday { get; set; }
+
+        [BsonElement("daily")]
+        public string? Daily { get; set; }
+
         [BsonElement("url")]
         public string? Url { get; set; }
+
+        // Add an explicit mapping for the 'sun_thu' element observed in the DB which caused
+        // deserialization failures when not present on this class.
+        [BsonElement("sun_thu")]
+        public string? SunThu { get; set; }
     }
 }

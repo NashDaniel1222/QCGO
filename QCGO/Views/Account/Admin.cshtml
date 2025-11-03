@@ -454,15 +454,42 @@
                             </div>
                             <div class="form-col">
                                 <div class="form-group">
-                                    <label for="barangay">Barangay</label>
-                                    <input id="barangay" name="barangay" type="text" value="@Model?.barangay" placeholder="Enter barangay" />
+                                            <label for="barangay">Barangay</label>
+                                            @{ 
+                                                var barangays = ViewBag.AllBarangays as List<string> ?? new List<string>();
+                                                var currentBarangay = Model?.barangay ?? string.Empty;
+                                                if (!string.IsNullOrEmpty(currentBarangay) && !barangays.Contains(currentBarangay)) {
+                                                    barangays.Insert(0, currentBarangay);
+                                                }
+                                            }
+                                            <select id="barangay" name="barangay">
+                                                <option value="">Select barangay</option>
+                                                @foreach (var b in barangays)
+                                                {
+                                                    var selb = b == Model?.barangay ? " selected" : "";
+                                                    @Html.Raw($"<option value=\"{System.Net.WebUtility.HtmlEncode(b)}\"{selb}>{System.Net.WebUtility.HtmlEncode(b)}</option>")
+                                                }
+                                            </select>
                                 </div>
                             </div>
                         </div>
                     
                         <div class="form-group">
                             <label for="type">Type</label>
-                            <input id="type" name="type" type="text" value="@Model?.type" placeholder="e.g., Park, Restaurant, Museum" />
+                            @{ 
+                                var types = ViewBag.AllTypes as List<string> ?? new List<string>();
+                                var currentType = Model?.type ?? string.Empty;
+                                if (!string.IsNullOrEmpty(currentType) && !types.Contains(currentType)) {
+                                    types.Insert(0, currentType);
+                                }
+                            }
+                            <select id="type" name="type">
+                                <option value="">Select type</option>
+                                @foreach (var t in types) {
+                                    var selt = t == Model?.type ? " selected" : "";
+                                    @Html.Raw($"<option value=\"{System.Net.WebUtility.HtmlEncode(t)}\"{selt}>{System.Net.WebUtility.HtmlEncode(t)}</option>")
+                                }
+                            </select>
                         </div>
                     
                         <div class="form-group">
@@ -579,14 +606,26 @@
                             <div class="form-col">
                                 <div class="form-group">
                                     <label for="editBarangay">Barangay</label>
-                                    <input id="editBarangay" name="barangay" type="text" placeholder="Enter barangay" />
+                                    @{ var editBarangays = ViewBag.AllBarangays as List<string> ?? new List<string>(); }
+                                    <select id="editBarangay" name="barangay">
+                                        <option value="">Select barangay</option>
+                                        @foreach (var b in editBarangays) {
+                                            <option value="@b">@b</option>
+                                        }
+                                    </select>
                                 </div>
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label for="editType">Type</label>
-                            <input id="editType" name="type" type="text" placeholder="e.g., Park, Restaurant, Museum" />
+                            @{ var editTypes = ViewBag.AllTypes as List<string> ?? new List<string>(); }
+                            <select id="editType" name="type">
+                                <option value="">Select type</option>
+                                @foreach (var t in editTypes) {
+                                    <option value="@t">@t</option>
+                                }
+                            </select>
                         </div>
 
                         <div class="form-group">
@@ -808,8 +847,24 @@
                 document.getElementById('spotId').value = spotId;
                 document.getElementById('editName').value = name;
                 document.getElementById('editDistrict').value = district;
-                document.getElementById('editBarangay').value = barangay;
-                document.getElementById('editType').value = type;
+                // Ensure edit selects contain the current values (append if missing) then set them
+                var editBarangayEl = document.getElementById('editBarangay');
+                if (editBarangayEl) {
+                    if (barangay && !Array.from(editBarangayEl.options).some(o => o.value === barangay)) {
+                        var opt = document.createElement('option'); opt.value = barangay; opt.text = barangay;
+                        editBarangayEl.appendChild(opt);
+                    }
+                    editBarangayEl.value = barangay;
+                }
+
+                var editTypeEl = document.getElementById('editType');
+                if (editTypeEl) {
+                    if (type && !Array.from(editTypeEl.options).some(o => o.value === type)) {
+                        var optt = document.createElement('option'); optt.value = type; optt.text = type;
+                        editTypeEl.appendChild(optt);
+                    }
+                    editTypeEl.value = type;
+                }
                 document.getElementById('editDescription').value = description;
                 document.getElementById('editLatitude').value = lat;
                 document.getElementById('editLongitude').value = lng;
