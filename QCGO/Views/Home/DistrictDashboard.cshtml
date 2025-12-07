@@ -36,7 +36,7 @@
         position: relative;
         overflow: hidden;
         width: 100%;
-        height: 360px;
+        height: 420px; /* increased for better image fit */
         border-radius: 12px;
     }
     
@@ -56,9 +56,9 @@
     }
     
     .district-image {
+        position: relative;
         width: 100%;
-        height: 100%;
-        max-height: 280px;
+        height: 420px; /* increased for better image fit */
         border-radius: 12px;
         overflow: hidden;
         box-shadow: 0 10px 30px rgba(0,0,0,0.12);
@@ -79,6 +79,47 @@
         object-fit: cover;
         display: block;
     }
+
+    /* stacked rotating images inside the container */
+    .rotating-image {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: opacity 0.8s ease;
+        opacity: 0;
+        z-index: 0;
+    }
+    .rotating-image.active {
+        opacity: 1;
+        z-index: 1;
+    }
+
+    /* Overlay text centered on the image */
+    .district-image .overlay-center {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+    }
+
+    .district-image .overlay-text {
+        color: white;
+        font-weight: 800;
+        font-size: 28px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        text-shadow: 0 4px 18px rgba(2,6,23,0.6);
+        background: rgba(0,0,0,0.32);
+        padding: 10px 18px;
+        border-radius: 8px;
+    }
+
+    /* Ensure overlay stays above rotating images */
+    .district-image .overlay-center { z-index: 3; }
     
     .district-meta {
         text-align: center;
@@ -171,8 +212,12 @@
     
     @@media (max-width: 768px) {
         .carousel-track {
-            height: 280px;
+            height: 340px; /* slightly reduced for tablet */
         }
+        .district-image {
+            height: 340px;
+        }
+        .district-image .overlay-text { font-size: 22px; padding:8px 14px; }
         
         .nav-btn {
             width: 40px;
@@ -186,12 +231,13 @@
     
     @@media (max-width: 576px) {
         .carousel-track {
-            height: 240px;
+            height: 260px; /* mobile-friendly height */
         }
         
         .district-image {
-            max-height: 180px;
+            height: 260px;
         }
+        .district-image .overlay-text { font-size: 18px; padding:6px 10px; }
     }
 </style>
 
@@ -206,23 +252,30 @@
             <div class="carousel-track">
                 @* District slides *@
                 @{ 
-                    var districts = new[] {
-                        new { Id = 1, Name = "District 1", Description = "The Spanish Colonial Core." },
-                        new { Id = 2, Name = "District 2", Description = "Historic neighborhoods and parks." },
-                        new { Id = 3, Name = "District 3", Description = "Cultural centers and galleries." },
-                        new { Id = 4, Name = "District 4", Description = "Markets and local flavors." },
-                        new { Id = 5, Name = "District 5", Description = "Modern districts with skyline views." },
-                        new { Id = 6, Name = "District 6", Description = "Quiet residential pockets." }
-                    };
+                    var districts = ViewBag.Districts as IEnumerable<dynamic> ?? new List<dynamic>();
                 }
-                
+
                 @foreach (var d in districts)
                 {
                     var link = Url.Action("DistrictSuggestions", "Home", new { district = d.Name });
                     <div class="district-slide" data-district-id="@d.Id">
                         <a href="@link" class="district-slide-link">
                             <div class="district-image" aria-hidden="true">
-                                <img src="/images/district@(d.Id).svg" alt="@d.Name" />
+                                @{
+                                    IEnumerable<string>? imgsEnum = null;
+                                    try { imgsEnum = d.ImageUrls as IEnumerable<string>; } catch { imgsEnum = null; }
+                                    var fallbackId = System.Convert.ToString((object?)d.Id) ?? "";
+                                    var imgsList = imgsEnum != null ? imgsEnum.ToList() : new List<string> { "/images/district" + fallbackId + ".svg" };
+                                    var idx = 0;
+                                }
+                                @foreach (var img in imgsList)
+                                {
+                                    <img src="@img" alt="@d.Name" class="rotating-image @(idx == 0 ? "active" : "")" />
+                                    idx++;
+                                }
+                                <div class="overlay-center">
+                                    <div class="overlay-text">@d.Name</div>
+                                </div>
                             </div>
                             <div class="district-meta">
                                 <div class="district-badge">DISTRICT @d.Id</div>
@@ -389,5 +442,38 @@
                 show(current - 1);
             }
         }
+    })();
+    // Rotator for per-district images (independent from the main carousel)
+    (function(){
+        function initRotators(){
+            var containers = document.querySelectorAll('.district-image');
+            containers.forEach(function(container){
+                var imgs = Array.from(container.querySelectorAll('.rotating-image'));
+                if (!imgs || imgs.length <= 1) return;
+                var current = imgs.findIndex(i=>i.classList.contains('active'));
+                if (current < 0) current = 0;
+                imgs.forEach(function(i, idx){
+                    i.style.position = 'absolute';
+                    i.style.top = '0';
+                    i.style.left = '0';
+                    i.style.width = '100%';
+                    i.style.height = '100%';
+                    i.style.objectFit = 'cover';
+                    i.style.transition = 'opacity 0.8s ease';
+                    i.style.opacity = idx === current ? '1' : '0';
+                });
+
+                setInterval(function(){
+                    imgs[current].classList.remove('active');
+                    imgs[current].style.opacity = '0';
+                    current = (current + 1) % imgs.length;
+                    imgs[current].classList.add('active');
+                    imgs[current].style.opacity = '1';
+                }, 3500 + Math.floor(Math.random()*1000));
+            });
+        }
+
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initRotators);
+        else initRotators();
     })();
 </script>

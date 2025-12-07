@@ -8,11 +8,13 @@ namespace QCGO.Controllers
     {
         private readonly QCGO.Services.SpotService _spotService;
         private readonly QCGO.Services.AccountService _accountService;
+        private readonly Microsoft.AspNetCore.Hosting.IWebHostEnvironment _env;
 
-        public HomeController(QCGO.Services.SpotService spotService, QCGO.Services.AccountService accountService)
+        public HomeController(QCGO.Services.SpotService spotService, QCGO.Services.AccountService accountService, Microsoft.AspNetCore.Hosting.IWebHostEnvironment env)
         {
             _spotService = spotService;
             _accountService = accountService;
+            _env = env;
         }
 
         // Support multiple tag/district query values (e.g. ?tag=Art&tag=Nature)
@@ -112,10 +114,10 @@ namespace QCGO.Controllers
             return Json(results);
         }
 
-        // New action: District dashboard (placeholder view)
+        // New action: District dashboard (populates district image paths)
         public IActionResult DistrictDashboard()
         {
-            // No logic yet - placeholder view
+            ViewBag.Districts = BuildDistrictImageList();
             return View();
         }
 
@@ -124,6 +126,17 @@ namespace QCGO.Controllers
         {
             // Populate shared sidebar data so the layout renders consistently
             PopulateSidebarData(null, null, null, null);
+            // Provide district images for the landing page carousel
+            ViewBag.Districts = BuildDistrictImageList();
+            return View();
+        }
+
+        // About page describing the system and the team
+        public IActionResult About()
+        {
+            // Keep sidebar/layout consistent
+            PopulateSidebarData(null, null, null, null);
+            ViewBag.Districts = BuildDistrictImageList();
             return View();
         }
 
@@ -357,6 +370,61 @@ namespace QCGO.Controllers
             .ToList<object>();
 
             return (groups, groupList);
+        }
+
+        // Build a shared district list with image URLs (first image in wwwroot/images/<District Name>/)
+        private List<object> BuildDistrictImageList()
+        {
+            var baseDistricts = new[] {
+                new { Id = 1, Name = "District 1", Description = "The Spanish Colonial Core." },
+                new { Id = 2, Name = "District 2", Description = "Historic neighborhoods and parks." },
+                new { Id = 3, Name = "District 3", Description = "Cultural centers and galleries." },
+                new { Id = 4, Name = "District 4", Description = "Markets and local flavors." },
+                new { Id = 5, Name = "District 5", Description = "Modern districts with skyline views." },
+                new { Id = 6, Name = "District 6", Description = "Quiet residential pockets." }
+            };
+
+            var result = new List<object>();
+            var webRoot = _env?.WebRootPath ?? string.Empty;
+            foreach (var d in baseDistricts)
+            {
+                var folderName = d.Name;
+                var folderPath = System.IO.Path.Combine(webRoot, "images", folderName);
+                var imageUrls = new List<string>();
+                string fallback = $"/images/district{d.Id}.svg"; // fallback single
+                try
+                {
+                    if (System.IO.Directory.Exists(folderPath))
+                    {
+                        var files = System.IO.Directory.EnumerateFiles(folderPath)
+                                    .Where(f => {
+                                        var ext = System.IO.Path.GetExtension(f)?.ToLowerInvariant();
+                                        return ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".gif" || ext == ".jfif" || ext == ".webp" || ext == ".svg";
+                                    })
+                                    .OrderBy(f => f)
+                                    .ToList();
+
+                        foreach (var f in files)
+                        {
+                            var fileName = System.IO.Path.GetFileName(f);
+                            imageUrls.Add($"/images/{folderName}/{fileName}".Replace("\\", "/"));
+                        }
+                    }
+                }
+                catch
+                {
+                    // ignore errors and keep fallback
+                }
+
+                if (imageUrls.Count == 0)
+                {
+                    imageUrls.Add(fallback);
+                }
+
+                result.Add(new { Id = d.Id, Name = d.Name, Description = d.Description, ImageUrls = imageUrls });
+            }
+
+            return result;
         }
     }
 }

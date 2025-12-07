@@ -196,6 +196,68 @@
             background-color: var(--qc-accent);
             color: white;
         }
+
+        /* Overlay text for district carousel images */
+        .district-image {
+            position: relative;
+            overflow: hidden;
+            height: 420px; /* explicit height so absolutely-positioned images are visible */
+        }
+
+        .district-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            position: absolute;
+            top: 0; left: 0;
+        }
+
+        .district-image .overlay-center {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .district-image .overlay-text {
+            color: white;
+            font-weight: 800;
+            font-size: 28px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            text-shadow: 0 4px 18px rgba(2,6,23,0.6);
+            background: rgba(0,0,0,0.32);
+            padding: 10px 18px;
+            border-radius: 8px;
+        }
+
+        /* Ensure overlay stays above rotating images */
+        .district-image .overlay-center { z-index: 3; }
+
+        /* rotating images inside landing page district-image */
+        .rotating-image {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.8s ease;
+            opacity: 0;
+        }
+        .rotating-image.active { opacity: 1; z-index: 1; }
+
+        @@media (max-width: 768px) {
+            .district-image { height: 340px; }
+            .district-image .overlay-text { font-size: 22px; padding:8px 14px; }
+        }
+
+        @@media (max-width: 576px) {
+            .district-image { height: 260px; }
+            .district-image .overlay-text { font-size: 18px; padding:6px 10px; }
+        }
     </style>
 </head>
 <body>
@@ -279,10 +341,47 @@
                         <h2 class="display-3 fw-bold mb-4 text-[#18a2b3]">QUEZON CITY</h2>
                         <p class="fs-5 mb-4 opacity-90">Where Culture, Nature, and Adventure Meet</p>
                         <a href="#districts" class="btn btn-lg px-4 py-2 mt-3 district-badge border-0">Start Your Journey</a>
+                        <a href="@Url.Action("About","Home")" class="btn btn-outline-light btn-lg ms-3 mt-3">About</a>
                     </div>
                 </div>
             </div>
         </section>
+
+    <script>
+        // Rotator for stacked images on landing page
+        (function(){
+            function initRotators(){
+                var containers = document.querySelectorAll('#districts .district-image');
+                containers.forEach(function(container){
+                    var imgs = Array.from(container.querySelectorAll('.rotating-image'));
+                    if (!imgs || imgs.length <= 1) return;
+                    var current = imgs.findIndex(i=>i.classList.contains('active'));
+                    if (current < 0) current = 0;
+                    imgs.forEach(function(i, idx){
+                        i.style.position = 'absolute';
+                        i.style.top = '0';
+                        i.style.left = '0';
+                        i.style.width = '100%';
+                        i.style.height = '100%';
+                        i.style.objectFit = 'cover';
+                        i.style.transition = 'opacity 0.8s ease';
+                        i.style.opacity = idx === current ? '1' : '0';
+                    });
+
+                    setInterval(function(){
+                        imgs[current].classList.remove('active');
+                        imgs[current].style.opacity = '0';
+                        current = (current + 1) % imgs.length;
+                        imgs[current].classList.add('active');
+                        imgs[current].style.opacity = '1';
+                    }, 3500 + Math.floor(Math.random()*1000));
+                });
+            }
+
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initRotators);
+            else initRotators();
+        })();
+    </script>
 
         <!-- Districts Section -->
         <section id="districts" class="py-5 bg-[#fbfdff]">
@@ -295,14 +394,7 @@
                 <!-- Bootstrap Carousel -->
                 <div id="districtCarousel" class="carousel slide" data-bs-ride="carousel">
                         @{ 
-                            var districts = new[] {
-                                new { Id = 1, Name = "District 1", Description = "The Spanish Colonial Core." },
-                                new { Id = 2, Name = "District 2", Description = "Historic neighborhoods and parks." },
-                                new { Id = 3, Name = "District 3", Description = "Cultural centers and galleries." },
-                                new { Id = 4, Name = "District 4", Description = "Markets and local flavors." },
-                                new { Id = 5, Name = "District 5", Description = "Modern districts with skyline views." },
-                                new { Id = 6, Name = "District 6", Description = "Quiet residential pockets." }
-                            };
+                            var districts = (ViewBag.Districts as IEnumerable<dynamic> ?? new List<dynamic>()).ToArray();
                         }
                         <div class="carousel-inner">
                             @for (var i = 0; i < districts.Length; i++) {
@@ -315,7 +407,23 @@
                                                     var link = Url.Action("DistrictSuggestions", "Home", new { district = d.Name });
                                                 }
                                                 <a href="@link" class="text-decoration-none text-reset d-block mb-3">
-                                                    <img src="/images/district@(d.Id).svg" alt="@d.Name" class="img-fluid rounded-3 shadow-lg" style="height: 360px; width: 100%; object-fit: cover;">
+                                                    <div class="district-image rounded-3 shadow-lg">
+                                                        @{
+                                                            IEnumerable<string>? imgsEnum = null;
+                                                            try { imgsEnum = d.ImageUrls as IEnumerable<string>; } catch { imgsEnum = null; }
+                                                            var fallbackId = System.Convert.ToString((object?)d.Id) ?? "";
+                                                            var imgs = imgsEnum != null ? imgsEnum.ToList() : new List<string> { "/images/district" + fallbackId + ".svg" };
+                                                            var ii = 0;
+                                                        }
+                                                        @foreach (var img in imgs)
+                                                        {
+                                                            <img src="@img" alt="@d.Name" class="rotating-image @(ii == 0 ? "active" : "")" />
+                                                            ii++;
+                                                        }
+                                                        <div class="overlay-center">
+                                                            <div class="overlay-text">@d.Name</div>
+                                                        </div>
+                                                    </div>
                                                     <div class="mt-3">
                                                         <span class="district-badge d-inline-block px-4 py-2">DISTRICT @d.Id</span>
                                                     </div>
