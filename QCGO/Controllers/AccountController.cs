@@ -9,8 +9,35 @@ using System.Linq;
 
 namespace QCGO.Controllers
 {
-    public class AccountController : Controller
-    {
+        public class AccountController : Controller
+        {
+            // ...existing code...
+            [HttpPost]
+            [ValidateAntiForgeryToken]
+            public IActionResult DeleteSpot([FromBody] DeleteSpotRequest request)
+            {
+                if (request == null || string.IsNullOrWhiteSpace(request.Id))
+                {
+                    return BadRequest(new { success = false, message = "Invalid spot ID." });
+                }
+
+                var deleted = _spotService.DeleteSpot(request.Id);
+                if (deleted)
+                {
+                    return Ok(new { success = true, message = "Spot deleted successfully." });
+                }
+                else
+                {
+                    return NotFound(new { success = false, message = "Spot not found or could not be deleted." });
+                }
+            }
+
+            public class DeleteSpotRequest
+            {
+                public string Id { get; set; }
+            }
+            // ...existing code...
+        
         private readonly AccountService _accountService;
         private readonly SpotService _spotService;
         private readonly ILogger<AccountController> _logger;
@@ -270,7 +297,10 @@ namespace QCGO.Controllers
 
             if (!ModelState.IsValid)
             {
-                TempData["AdminMessage"] = "Invalid spot data.";
+                var errorMessages = string.Join("<br>", ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage));
+                TempData["AdminMessage"] = $"Invalid spot data:<br>{errorMessages}";
                 ViewBag.AllDistricts = _spotService.GetAllDistricts();
                 ViewBag.AllBarangays = _spotService.GetAllBarangays();
                 ViewBag.AllTypes = _spotService.GetAllTypes();
@@ -304,12 +334,9 @@ namespace QCGO.Controllers
             existing.Description = model.Description;
             existing.Tags = model.Tags ?? new List<string>();
             existing.Coordinates = new Coordinates { Lat = model.Latitude, Lng = model.Longitude };
-            existing.Accessibility = new Accessibility {
-                PublicTransport = model.PublicTransport,
-                ParkingAvailable = model.ParkingAvailable,
-                WheelchairAccessible = model.WheelchairAccessible
-            };
-            existing.MapOpenHours = new MapOpenHours { Url = model.MapUrl };
+            existing.PublicTransport = model.PublicTransport;
+            existing.ParkingAvailable = model.ParkingAvailable;
+            existing.WheelchairAccessible = model.WheelchairAccessible;
 
             var updated = _spotService.UpdateSpot(existing);
             if (updated)
@@ -346,7 +373,10 @@ namespace QCGO.Controllers
 
             if (!ModelState.IsValid)
             {
-                TempData["AdminMessage"] = "Invalid spot data.";
+                var errorMessages = string.Join("<br>", ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage));
+                TempData["AdminMessage"] = $"Invalid spot data:<br>{errorMessages}";
                 ViewBag.AllDistricts = _spotService.GetAllDistricts();
                 ViewBag.AllBarangays = _spotService.GetAllBarangays();
                 ViewBag.AllTypes = _spotService.GetAllTypes();
@@ -370,14 +400,9 @@ namespace QCGO.Controllers
                 Description = model.Description,
                 Tags = model.Tags ?? new List<string>(),
                 Coordinates = new Coordinates { Lat = model.Latitude, Lng = model.Longitude },
-                Accessibility = new Accessibility {
-                    PublicTransport = model.PublicTransport,
-                    ParkingAvailable = model.ParkingAvailable,
-                    WheelchairAccessible = model.WheelchairAccessible
-                },
-                MapOpenHours = new MapOpenHours { Url = model.MapUrl },
-                AddedBy = username,
-                CreatedAt = DateTime.UtcNow
+                PublicTransport = model.PublicTransport,
+                ParkingAvailable = model.ParkingAvailable,
+                WheelchairAccessible = model.WheelchairAccessible
             };
 
             var added = _spotService.AddSpot(spot);

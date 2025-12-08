@@ -578,28 +578,19 @@
                             <div class="form-col">
                                 <div class="form-group">
                                     <label for="coordinates.lat">Latitude</label>
-                                    <input id="coordinates.lat" name="coordinates.lat" type="number" step="any" value="@Model?.coordinates?.lat" placeholder="e.g., 14.6393" />
+                                    <input id="Latitude" name="Latitude" type="number" step="any" value="@Model?.Latitude" placeholder="e.g., 14.6393" />
                                 </div>
                             </div>
                             <div class="form-col">
                                 <div class="form-group">
                                     <label for="coordinates.lng">Longitude</label>
-                                    <input id="coordinates.lng" name="coordinates.lng" type="number" step="any" value="@Model?.coordinates?.lng" placeholder="e.g., 121.0336" />
+                                    <input id="Longitude" name="Longitude" type="number" step="any" value="@Model?.Longitude" placeholder="e.g., 121.0336" />
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="form-section">
-                        <h3 class="form-section-title">Operating Hours</h3>
-                        <div class="form-group">
-                            <div class="hours-row">
-                                <label for="open_hours.daily">Daily Hours:</label>
-                                <input id="open_hours.daily" name="open_hours.daily" type="text" value="@Model?.open_hours?.daily" placeholder="e.g., 08:00-17:00" />
-                            </div>
-                            <div class="form-hint">Format: HH:MM-HH:MM (24-hour format)</div>
-                        </div>
-                    </div>
+                    <!-- Removed operating hours section -->
                 
                     <div class="form-section">
                         <h3 class="form-section-title">Tags & Features</h3>
@@ -613,16 +604,16 @@
                             <label>Accessibility & Amenities</label>
                             <div class="checkbox-group">
                                 <div class="checkbox-item">
-                                    <input type="checkbox" id="accessibility.public_transport" name="accessibility.public_transport" @((Model?.accessibility?.public_transport ?? false) ? "checked" : "") />
-                                    <label for="accessibility.public_transport">Public transport available</label>
+                                    <input type="checkbox" id="PublicTransport" name="PublicTransport" value="true" @(Model?.PublicTransport == true ? "checked" : "") />
+                                    <label for="PublicTransport">Public transport available</label>
                                 </div>
                                 <div class="checkbox-item">
-                                    <input type="checkbox" id="accessibility.parking_available" name="accessibility.parking_available" @((Model?.accessibility?.parking_available ?? false) ? "checked" : "") />
-                                    <label for="accessibility.parking_available">Parking available</label>
+                                    <input type="checkbox" id="ParkingAvailable" name="ParkingAvailable" value="true" @(Model?.ParkingAvailable == true ? "checked" : "") />
+                                    <label for="ParkingAvailable">Parking available</label>
                                 </div>
                                 <div class="checkbox-item">
-                                    <input type="checkbox" id="accessibility.wheelchair_accessible" name="accessibility.wheelchair_accessible" @((Model?.accessibility?.wheelchair_accessible ?? false) ? "checked" : "") />
-                                    <label for="accessibility.wheelchair_accessible">Wheelchair accessible</label>
+                                    <input type="checkbox" id="WheelchairAccessible" name="WheelchairAccessible" value="true" @(Model?.WheelchairAccessible == true ? "checked" : "") />
+                                    <label for="WheelchairAccessible">Wheelchair accessible</label>
                                 </div>
                             </div>
                         </div>
@@ -714,28 +705,19 @@
                             <div class="form-col">
                                 <div class="form-group">
                                     <label for="editLatitude">Latitude</label>
-                                    <input id="editLatitude" name="coordinates.lat" type="number" step="any" placeholder="e.g., 14.6393" />
+                                    <input id="editLatitude" name="Latitude" type="number" step="any" placeholder="e.g., 14.6393" />
                                 </div>
                             </div>
                             <div class="form-col">
                                 <div class="form-group">
                                     <label for="editLongitude">Longitude</label>
-                                    <input id="editLongitude" name="coordinates.lng" type="number" step="any" placeholder="e.g., 121.0336" />
+                                    <input id="editLongitude" name="Longitude" type="number" step="any" placeholder="e.g., 121.0336" />
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="form-section">
-                        <h3 class="form-section-title">Operating Hours</h3>
-                        <div class="form-group">
-                            <div class="hours-row">
-                                <label for="editOpenHours">Daily Hours:</label>
-                                <input id="editOpenHours" name="open_hours.daily" type="text" placeholder="e.g., 08:00-17:00" />
-                            </div>
-                            <div class="form-hint">Format: HH:MM-HH:MM (24-hour format)</div>
-                        </div>
-                    </div>
+                    <!-- Removed operating hours section -->
 
                     <div class="form-section">
                         <h3 class="form-section-title">Tags & Features</h3>
@@ -749,15 +731,15 @@
                             <label>Accessibility & Amenities</label>
                             <div class="checkbox-group">
                                 <div class="checkbox-item">
-                                    <input type="checkbox" id="editPublicTransport" name="accessibility.public_transport" />
+                                    <input type="checkbox" id="editPublicTransport" name="PublicTransport" value="true" />
                                     <label for="editPublicTransport">Public transport available</label>
                                 </div>
                                 <div class="checkbox-item">
-                                    <input type="checkbox" id="editParkingAvailable" name="accessibility.parking_available" />
+                                    <input type="checkbox" id="editParkingAvailable" name="ParkingAvailable" value="true" />
                                     <label for="editParkingAvailable">Parking available</label>
                                 </div>
                                 <div class="checkbox-item">
-                                    <input type="checkbox" id="editWheelchairAccessible" name="accessibility.wheelchair_accessible" />
+                                    <input type="checkbox" id="editWheelchairAccessible" name="WheelchairAccessible" value="true" />
                                     <label for="editWheelchairAccessible">Wheelchair accessible</label>
                                 </div>
                             </div>
@@ -807,14 +789,7 @@
                         return;
                     }
 
-                    // Validate operating hours format
-                    const hoursField = document.getElementById('open_hours.daily');
-                    if (hoursField.value && !/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(hoursField.value)) {
-                        e.preventDefault();
-                        alert('Please enter operating hours in the format HH:MM-HH:MM (e.g., 08:00-17:00)');
-                        hoursField.focus();
-                        return;
-                    }
+                    // ...existing code...
                 });
             }
             
@@ -906,8 +881,7 @@
                     lng = data.coordinates.lng?.$numberDouble || data.coordinates.lng || '';
                 }
                 
-                // Handle open hours
-                const openHours = data.open_hours?.daily || '';
+                // ...existing code...
                 
                 // Handle tags array
                 const tags = Array.isArray(data.tags) ? data.tags.join(', ') : '';
@@ -942,7 +916,7 @@
                 document.getElementById('editDescription').value = description;
                 document.getElementById('editLatitude').value = lat;
                 document.getElementById('editLongitude').value = lng;
-                document.getElementById('editOpenHours').value = openHours;
+                // ...existing code...
                 document.getElementById('editTags').value = tags;
                 document.getElementById('editPublicTransport').checked = publicTransport;
                 document.getElementById('editParkingAvailable').checked = parkingAvailable;
@@ -961,7 +935,7 @@
                 document.getElementById('editDescription').value = '';
                 document.getElementById('editLatitude').value = '';
                 document.getElementById('editLongitude').value = '';
-                document.getElementById('editOpenHours').value = '';
+                // ...existing code...
                 document.getElementById('editTags').value = '';
                 document.getElementById('editPublicTransport').checked = false;
                 document.getElementById('editParkingAvailable').checked = false;
