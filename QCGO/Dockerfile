@@ -14,4 +14,6 @@ RUN dotnet publish QCGO.csproj -c Release -o /app/publish
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
+# Set environment to Production to avoid file watcher/inotify errors
+ENV ASPNETCORE_ENVIRONMENT=Production
 ENTRYPOINT ["dotnet", "QCGO.dll"]
