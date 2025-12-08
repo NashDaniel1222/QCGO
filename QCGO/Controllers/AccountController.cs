@@ -122,6 +122,38 @@ namespace QCGO.Controllers
             return RedirectToAction("Login");
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CreateAdmin([FromForm] string username, [FromForm] string password, [FromForm] string displayName)
+        {
+            // Require @ in username and a domain
+            if (string.IsNullOrWhiteSpace(username) || !username.Contains("@") || !username.Contains("."))
+            {
+                return Json(new { success = false, message = "Username must be a valid email address." });
+            }
+            if (!username.EndsWith("@gmail.com", StringComparison.OrdinalIgnoreCase) && !username.EndsWith("@yahoo.com", StringComparison.OrdinalIgnoreCase) && !username.EndsWith("@outlook.com", StringComparison.OrdinalIgnoreCase))
+            {
+                return Json(new { success = false, message = "Username must end with @gmail.com, @yahoo.com, or @outlook.com." });
+            }
+            if (string.IsNullOrWhiteSpace(password) || password.Length < 4)
+            {
+                return Json(new { success = false, message = "Password must be at least 4 characters." });
+            }
+            if (_accountService.Exists(username))
+            {
+                return Json(new { success = false, message = "An account with that email already exists." });
+            }
+            var created = _accountService.CreateAccount(username, password, displayName, "admin");
+            if (created)
+            {
+                return Json(new { success = true, message = "Admin account created successfully." });
+            }
+            else
+            {
+                return Json(new { success = false, message = "Failed to create admin. Please try again." });
+            }
+        }
+
         [HttpGet]
         public IActionResult Profile()
         {

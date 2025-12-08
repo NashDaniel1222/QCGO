@@ -1,3 +1,49 @@
+    <script>
+    function showMakeAdminModal() {
+        document.getElementById('makeAdminModal').style.display = 'flex';
+    }
+    function hideMakeAdminModal() {
+        document.getElementById('makeAdminModal').style.display = 'none';
+        document.getElementById('makeAdminForm').reset();
+        document.getElementById('makeAdminMsg').innerText = '';
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        var form = document.getElementById('makeAdminForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var msg = document.getElementById('makeAdminMsg');
+                msg.innerText = 'Creating admin...';
+                msg.style.color = '#2980b9';
+                var fd = new FormData(form);
+                fetch('/Account/CreateAdmin', {
+                    method: 'POST',
+                    body: fd,
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        msg.style.color = 'var(--success)';
+                        msg.innerText = data.message;
+                        setTimeout(function() {
+                            hideMakeAdminModal();
+                        }, 1200);
+                    } else {
+                        msg.style.color = 'var(--danger)';
+                        msg.innerText = data.message;
+                    }
+                })
+                .catch(err => {
+                    msg.style.color = 'var(--danger)';
+                    msg.innerText = 'Error: ' + (err.message || 'Failed to create admin.');
+                });
+            });
+        }
+    });
+    </script>
 @{
     Layout = null;
     ViewData["Title"] = "Admin";
@@ -415,9 +461,37 @@
         }
 
         <div class="form-container">
-            <div class="tab-controls">
-                <button type="button" id="tabBtnAdd" class="tab-btn active" onclick="showTab('add')">Add Spot</button>
-                <button type="button" id="tabBtnEdit" class="tab-btn" onclick="showTab('edit')">Edit Spot</button>
+            <div class="tab-controls" style="justify-content: space-between; align-items: center;">
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" id="tabBtnAdd" class="tab-btn active" onclick="showTab('add')">Add Spot</button>
+                    <button type="button" id="tabBtnEdit" class="tab-btn" onclick="showTab('edit')">Edit Spot</button>
+                </div>
+                <button type="button" id="makeAdminBtn" class="tab-btn" style="background: var(--accent); color: #fff; margin-left: auto;" onclick="showMakeAdminModal()">Make Admin</button>
+            </div>
+            <!-- Make Admin Modal -->
+            <div id="makeAdminModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(44,62,80,0.25); z-index:1000; align-items:center; justify-content:center;">
+                <div style="background:#fff; border-radius:12px; box-shadow:0 8px 32px rgba(44,62,80,0.18); padding:32px 28px; max-width:400px; width:90%; margin:auto; position:relative;">
+                    <h2 style="margin-bottom:18px; color:var(--primary); font-size:1.3rem;">Create New Admin</h2>
+                    <form id="makeAdminForm">
+                        <div class="form-group">
+                            <label for="adminUsername" class="required">Username</label>
+                            <input id="adminUsername" name="username" type="email" required placeholder="Enter email" />
+                        </div>
+                        <div class="form-group">
+                            <label for="adminPassword" class="required">Password</label>
+                            <input id="adminPassword" name="password" type="password" required placeholder="Enter password" />
+                        </div>
+                        <div class="form-group">
+                            <label for="adminDisplayName">Display Name</label>
+                            <input id="adminDisplayName" name="displayName" type="text" placeholder="Display name (optional)" />
+                        </div>
+                        <div style="display:flex; gap:10px; margin-top:18px;">
+                            <button type="submit" class="submit-btn" style="flex:2;">Create Admin</button>
+                            <button type="button" onclick="hideMakeAdminModal()" class="delete-btn" style="flex:1; background:var(--gray); color:#fff;">Cancel</button>
+                        </div>
+                        <div id="makeAdminMsg" style="margin-top:12px; color:var(--danger); font-size:0.95rem;"></div>
+                    </form>
+                </div>
             </div>
 
             <div id="addTab" class="tab-content active">

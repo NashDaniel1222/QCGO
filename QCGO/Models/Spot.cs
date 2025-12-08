@@ -42,6 +42,17 @@ namespace QCGO.Models
             // Normalize Windows backslashes to forward slashes
             var normalized = ImageUrl.Replace('\\', '/').Trim();
 
+            // Remove 'QCGO/wwwroot' or 'QCGO' prefix if present
+            var lower = normalized.ToLowerInvariant();
+            if (lower.StartsWith("qcgo/wwwroot/"))
+                normalized = normalized.Substring("qcgo/wwwroot/".Length);
+            else if (lower.StartsWith("qcgo/wwwroot"))
+                normalized = normalized.Substring("qcgo/wwwroot".Length);
+            else if (lower.StartsWith("qcgo/"))
+                normalized = normalized.Substring("qcgo/".Length);
+            else if (lower.StartsWith("qcgo"))
+                normalized = normalized.Substring("qcgo".Length);
+
             // If path contains "wwwroot", extract the portion after it
             var idx = normalized.IndexOf("wwwroot", StringComparison.OrdinalIgnoreCase);
             if (idx >= 0)
