@@ -8,8 +8,28 @@ using System.Linq;
 
 namespace QCGO.Services
 {
-    public class SpotService
-    {
+        public class SpotService
+        {
+            // ...existing code...
+            // Delete a spot by its ID. Returns true if deleted.
+            public bool DeleteSpot(string id)
+            {
+                if (!_connected || _spots == null || string.IsNullOrWhiteSpace(id)) return false;
+                try
+                {
+                    var filter = Builders<Spot>.Filter.Eq(s => s.Id, id);
+                    var result = _spots.DeleteOne(filter);
+                    return result.IsAcknowledged && result.DeletedCount > 0;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to delete spot {Id}", id);
+                    return false;
+                }
+            }
+            // ...existing code...
+        
+
         private readonly IMongoCollection<Spot>? _spots;
         private readonly ILogger<SpotService> _logger;
         private readonly bool _connected;
@@ -337,8 +357,6 @@ namespace QCGO.Services
             if (!_connected || _spots == null || spot == null) return false;
             try
             {
-                // ensure timestamps
-                spot.CreatedAt = spot.CreatedAt ?? DateTime.UtcNow;
                 _spots.InsertOne(spot);
                 return true;
             }

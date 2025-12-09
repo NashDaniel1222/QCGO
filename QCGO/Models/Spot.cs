@@ -24,8 +24,6 @@ namespace QCGO.Models
         [BsonElement("type")]
         public string? Type { get; set; }
 
-        [BsonElement("category")]
-        public string? Category { get; set; }
 
         [BsonElement("image_url")]
         public string? ImageUrl { get; set; } // Store the relative path
@@ -79,20 +77,21 @@ namespace QCGO.Models
         [BsonElement("rating")]
         public double? Rating { get; set; }
 
-        [BsonElement("created_at")]
-        public DateTime? CreatedAt { get; set; }
 
-        [BsonElement("added_by")]
-        public string? AddedBy { get; set; }
 
         [BsonElement("coordinates")]
         public Coordinates? Coordinates { get; set; }
 
-        [BsonElement("accessibility")]
-        public Accessibility? Accessibility { get; set; }
+        [BsonElement("public_transport")]
+        public bool PublicTransport { get; set; }
 
-        [BsonElement("open_hours")]
-        public MapOpenHours? MapOpenHours { get; set; }
+        [BsonElement("parking_available")]
+        public bool ParkingAvailable { get; set; }
+
+        [BsonElement("wheelchair_accessible")]
+        public bool WheelchairAccessible { get; set; }
+
+        // ...existing code...
     }
 
     public class Coordinates
@@ -116,29 +115,5 @@ namespace QCGO.Models
         public bool WheelchairAccessible { get; set; }
     }
 
-    [BsonIgnoreExtraElements]
-    public class MapOpenHours
-    {
-        // Some documents use different keys for open hours (e.g. "sun_thu").
-        // Add common mappings and ignore unknown elements to be tolerant of variations in the DB.
-        [BsonElement("mon_fri")]
-        public string? MonFri { get; set; }
-
-        [BsonElement("saturday")]
-        public string? Saturday { get; set; }
-
-        [BsonElement("sunday")]
-        public string? Sunday { get; set; }
-
-        [BsonElement("daily")]
-        public string? Daily { get; set; }
-
-        [BsonElement("url")]
-        public string? Url { get; set; }
-
-        // Add an explicit mapping for the 'sun_thu' element observed in the DB which caused
-        // deserialization failures when not present on this class.
-        [BsonElement("sun_thu")]
-        public string? SunThu { get; set; }
-    }
+    // ...existing code...
 }
